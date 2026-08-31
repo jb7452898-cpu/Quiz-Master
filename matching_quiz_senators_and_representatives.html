@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Four-Category Matching Quiz</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --background: #0d0f0e;
+      --panel: #171917;
+      --card: #101210;
+      --text: #f5f1e8;
+      --muted: #9d9a91;
+      --border: #393c37;
+      --green: #c8f25b;
+      --orange: #ff8a4c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--background);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    button { font: inherit; }
+    .game {
+      width: min(1050px, calc(100% - 30px));
+      margin: auto;
+      padding: 40px 0 60px;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 30px;
+      padding-bottom: 26px;
+      border-bottom: 1px solid #333631;
+    }
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--green);
+      font-size: .72rem;
+      font-weight: bold;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      font: 500 clamp(2.6rem, 7vw, 5rem)/.95 Georgia, serif;
+      letter-spacing: -.04em;
+    }
+    .subtitle { margin: 16px 0 0; color: var(--muted); }
+    .score-box {
+      min-width: 150px;
+      padding: 14px 22px;
+      border: 1px solid #333631;
+      background: #131513;
+    }
+    .score-box span {
+      display: block;
+      color: var(--muted);
+      font-size: .7rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    #score { display: block; margin-top: 4px; font-size: 1.8rem; }
+    .panel {
+      margin-top: 30px;
+      padding: 27px;
+      background: var(--panel);
+      border: 1px solid #333631;
+      box-shadow: 10px 10px 0 #090a09;
+      transition: border-color .35s, box-shadow .35s, background .35s;
+    }
+    .panel.victory-glow {
+      border-color: var(--green);
+      background: #1b2115;
+      box-shadow:
+        0 0 18px rgba(200, 242, 91, .75),
+        0 0 48px rgba(200, 242, 91, .35),
+        10px 10px 0 #090a09;
+      animation: victoryPulse .7s ease-in-out infinite alternate;
+    }
+    @keyframes victoryPulse {
+      from { filter: brightness(1); }
+      to { filter: brightness(1.18); }
+    }
+    .panel-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    h2 { margin: 0; font: 500 1.55rem Georgia, serif; }
+    #new-round {
+      padding: 11px 18px;
+      color: #10120e;
+      background: var(--green);
+      border: 1px solid var(--green);
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #new-round:hover { background: #ddff81; }
+    #message {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      margin: 22px 0 16px;
+      padding: 0 14px;
+      background: #20211e;
+      border-left: 3px solid var(--orange);
+      color: #ded8cc;
+    }
+    #message.success { border-color: var(--green); color: var(--green); }
+    #cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      transition: opacity .75s ease, transform .75s ease;
+    }
+    #cards.fade-away { opacity: 0; transform: scale(.96); }
+    .card {
+      min-height: 76px;
+      display: grid;
+      grid-template-columns: 42px 1fr 30px;
+      align-items: center;
+      padding: 0 16px;
+      color: var(--text);
+      background: var(--card);
+      border: 1px solid var(--border);
+      text-align: left;
+      cursor: pointer;
+      transition: transform .15s, border-color .15s, background .15s;
+    }
+    .card:hover:not(:disabled) { border-color: #777d70; transform: translateY(-2px); }
+    .card.selected { border-color: var(--orange); background: #241b16; }
+    .card.matched {
+      border-color: #405126;
+      background: #1a2112;
+      color: #a9c95f;
+      cursor: pointer;
+    }
+    .card.matched:hover { border-color: var(--green); transform: translateY(-2px); }
+    .card.matched .mark {
+      color: var(--green);
+      font-size: .68rem;
+      font-weight: bold;
+      letter-spacing: .06em;
+    }
+    .number { color: #6d7169; font: .78rem monospace; }
+    .label { font-size: clamp(1rem, 2vw, 1.25rem); font-weight: bold; }
+    .mark { color: var(--green); text-align: right; font-size: 1.1rem; }
+    .instructions { margin: 22px 2px 0; color: var(--muted); font-size: .85rem; }
+    @media (max-width: 680px) {
+      .game { width: min(100% - 20px, 1050px); padding-top: 24px; }
+      header { align-items: stretch; flex-direction: column; }
+      .score-box { min-width: 0; }
+      .panel { padding: 18px; }
+      #cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="game">
+    <header>
+      <div>
+        <p class="eyebrow">Four-category quiz</p>
+        <h1>Find the hidden pairs.</h1>
+        <p class="subtitle">Five source terms. Five clues. Ten shuffled positions.</p>
+        <p>NOTE:  Some clues fit better than others! (you can have a match that's technically correct but if you still cant solve the game, you may have to UNLOCK and try again!</p>
+      </div>
+      <div class="score-box">
+        <span>Score</span>
+        <strong id="score">0</strong>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <h2>Match each term to its clue</h2>
+        <button id="new-round" type="button">New round</button>
+      </div>
+      <p id="message" aria-live="polite">Choose any card to begin.</p>
+      <div id="cards"></div>
+      <p class="instructions">Correct match: +10 points &nbsp;·&nbsp; Incorrect attempt: −2 points &nbsp;·&nbsp; Click UNLOCK on either matched tile to reconsider it</p>
+    </section>
+  </main>
+
+  <script>
+    /*
+      EDIT YOUR QUIZ ROWS HERE.
+
+      The first value in every row must be unique.
+      The second, third, and optional fourth values are allowed to repeat.
+      Leave fourth blank (or omit it) when a row needs only three categories.
+    */
+    const QUIZ_ROWS = [
+    { first: "angela alsobrooks",     second: "maryland",     third: "democrat",   fourth: "senator" },
+    { first: "alan armstrong",     second: "oklahoma",     third: "republican",   fourth: "senator" },
+    { first: "tammy baldwin",     second: "winconsic",     third: "democrat",   fourth: "senator" },
+    { first: "jim banks",     second: "indiana",     third: "republican",   fourth: "senator" },
+    { first: "john barrasso",     second: "wyoming",     third: "republican",   fourth: "senator" },
+    { first: "michael bennet",     second: "colorado",     third: "democrat",   fourth: "senator" },
+    { first: "marsha blackburn",     second: "tennessee",     third: "republican",   fourth: "senator" },
+    { first: "richard blumenthal",     second: "connecticut",     third: "democrat",   fourth: "senator" },
+    { first: "lisa blunt rochester",     second: "delaware",     third: "democrat",   fourth: "senator" },
+    { first: "cory booker",     second: "new jersey",     third: "democrat",   fourth: "senator" },
+    { first: "john boozman",     second: "arkansas",     third: "republican",   fourth: "senator" },
+    { first: "katie boyd britt",     second: "alabama",     third: "republican",   fourth: "senator" },
+    { first: "ted budd",     second: "north carolina",     third: "republican",   fourth: "senator" },
+    { first: " maria cantwell",     second: "washington",     third: "democrat",   fourth: "senator" },
+    { first: " shelley moore capito",     second: "west virginia",     third: "republican",   fourth: "senator" },
+    { first: " bill cassidy",     second: "louisiana",     third: "republican",   fourth: "senator" },
+    { first: " susan m. collins",     second: "maine",     third: "republican",   fourth: "senator" },
+    { first: " christopher a. coons",     second: "delaware",     third: "democrat",   fourth: "senator" },
+    { first: " john cornyn",     second: "texas",     third: "republican",   fourth: "senator" },
+    { first: " catherine cortez masto",     second: "nevada",     third: "democrat",   fourth: "senator" },
+    { first: " tom cotton",     second: "arkansas",     third: "republican",   fourth: "senator" },
+    { first: " kevin cramer",     second: "north dakota",     third: "republican",   fourth: "senator" },
+    { first: " mike crapo",     second: "idaho",     third: "republican",   fourth: "senator" },
+    { first: " ted cruz",     second: "texas",     third: "republican",   fourth: "senator" },
+    { first: " john r. curtis",     second: "utah",     third: "republican",   fourth: "senator" },
+    { first: " steve daines",     second: "montana",     third: "republican",   fourth: "senator" },
+    { first: " tammy duckworth",     second: "illinois",     third: "democrat",   fourth: "senator" },
+    { first: " richard j. durbin",     second: "illinois",     third: "democrat",   fourth: "senator" },
+    { first: " joni ernst",     second: "iowa",     third: "republican",   fourth: "senator" },
+    { first: " john fetterman",     second: "pennsylvania",     third: "democrat",   fourth: "senator" },
+    { first: " deb fischer",     second: "nebraska",     third: "republican",   fourth: "senator" },
+    { first: " ruben gallego",     second: "arizona",     third: "democrat",   fourth: "senator" },
+    { first: " kirsten e. gillibrand",     second: "new york",     third: "democrat",   fourth: "senator" },
+    { first: " darline graham",     second: "south carolina",     third: "republican",   fourth: "senator" },
+    { first: " chuck grassley",     second: "iowa",     third: "republican",   fourth: "senator" },
+    { first: " bill hagerty",     second: "tennessee",     third: "republican",   fourth: "senator" },
+    { first: " margaret wood hassan",     second: "new hampshire",     third: "democrat",   fourth: "senator" },
+    { first: " josh hawley",     second: "missouri",     third: "republican",   fourth: "senator" },
+    { first: " martin heinrich",     second: "new mexico",     third: "democrat",   fourth: "senator" },
+    { first: " john w. hickenlooper",     second: "colorado",     third: "democrat",   fourth: "senator" },
+    { first: " mazie k. hirono",     second: "hawaii",     third: "democrat",   fourth: "senator" },
+    { first: " john hoeven",     second: "north dakota",     third: "republican",   fourth: "senator" },
+    { first: " jon husted",     second: "ohio",     third: "republican",   fourth: "senator" },
+    { first: " cindy hyde-smith",     second: "mississippi",     third: "republican",   fourth: "senator" },
+    { first: " ron johnson",     second: "wisconsin",     third: "republican",   fourth: "senator" },
+    { first: " james c. justice",     second: "west virginia",     third: "republican",   fourth: "senator" },
+    { first: " tim kaine",     second: "virginia",     third: "democrat",   fourth: "senator" },
+    { first: " mark kelly",     second: "arizona",     third: "democrat",   fourth: "senator" },
+    { first: " john kennedy",     second: "louisiana",     third: "republican",   fourth: "senator" },
+    { first: " andy kim",     second: "new jersey",     third: "democrat",   fourth: "senator" },
+    { first: " angus s. jr. king",     second: "maine",     third: "independent",   fourth: "senator" },
+    { first: " amy klobuchar",     second: "minnesota",     third: "democrat",   fourth: "senator" },
+    { first: " james lankford",     second: "oklahoma",     third: "republican",   fourth: "senator" },
+    { first: " mike lee",     second: "utah",     third: "republican",   fourth: "senator" },
+    { first: " ben ray luján",     second: "new mexico",     third: "democrat",   fourth: "senator" },
+    { first: " cynthia m. lummis",     second: "wyoming",     third: "republican",   fourth: "senator" },
+    { first: " edward j. markey",     second: "massachusetts",     third: "democrat",   fourth: "senator" },
+    { first: " roger marshall",     second: "kansas",     third: "republican",   fourth: "senator" },
+    { first: " mitch mcconnell",     second: "kentucky",     third: "republican",   fourth: "senator" },
+    { first: " david mccormick",     second: "pennsylvania",     third: "republican",   fourth: "senator" },
+    { first: " jeff merkley",     second: "oregon",     third: "democrat",   fourth: "senator" },
+    { first: " ashley moody",     second: "florida",     third: "republican",   fourth: "senator" },
+    { first: " jerry moran",     second: "kansas",     third: "republican",   fourth: "senator" },
+    { first: " bernie moreno",     second: "ohio",     third: "republican",   fourth: "senator" },
+    { first: " lisa murkowski",     second: "alaska",     third: "republican",   fourth: "senator" },
+    { first: " christopher murphy",     second: "connecticut",     third: "democrat",   fourth: "senator" },
+    { first: " patty murray",     second: "washington",     third: "democrat",   fourth: "senator" },
+    { first: " jon ossoff",     second: "georgia",     third: "democrat",   fourth: "senator" },
+    { first: " alex padilla",     second: "california",     third: "democrat",   fourth: "senator" },
+    { first: " rand paul",     second: "kentucky",     third: "republican",   fourth: "senator" },
+    { first: " gary c. peters",     second: "michigan",     third: "democrat",   fourth: "senator" },
+    { first: " jack reed",     second: "rhode island",     third: "democrat",   fourth: "senator" },
+    { first: " pete ricketts",     second: "nebraska",     third: "republican",   fourth: "senator" },
+    { first: " james e. risch",     second: "idaho",     third: "republican",   fourth: "senator" },
+    { first: " jacky rosen",     second: "nevada",     third: "democrat",   fourth: "senator" },
+    { first: " mike rounds",     second: "south dakota",     third: "republican",   fourth: "senator" },
+    { first: " bernard sanders",     second: "vermont",     third: "independent",   fourth: "senator" },
+    { first: " brian schatz",     second: "hawaii",     third: "democrat",   fourth: "senator" },
+    { first: " adam b. schiff",     second: "california",     third: "democrat",   fourth: "senator" },
+    { first: " eric schmitt",     second: "missouri",     third: "republican",   fourth: "senator" },
+    { first: " charles e. schumer",     second: "new york",     third: "democrat",   fourth: "senator" },
+    { first: " rick scott",     second: "florida",     third: "republican",   fourth: "senator" },
+    { first: " tim scott",     second: "south carolina",     third: "republican",   fourth: "senator" },
+    { first: " jeanne shaheen",     second: "new hampshire",     third: "democrat",   fourth: "senator" },
+    { first: " tim sheehy",     second: "montana",     third: "republican",   fourth: "senator" },
+    { first: " elissa slotkin",     second: "michigan",     third: "democrat",   fourth: "senator" },
+    { first: " tina smith",     second: "minnesota",     third: "democrat",   fourth: "senator" },
+    { first: " dan sullivan",     second: "alaska",     third: "republican",   fourth: "senator" },
+    { first: " john thune",     second: "south dakota",     third: "republican",   fourth: "senator" },
+    { first: " thom tillis",     second: "north carolina",     third: "republican",   fourth: "senator" },
+    { first: " tommy tuberville",     second: "alabama",     third: "republican",   fourth: "senator" },
+    { first: " chris van hollen",     second: "maryland",     third: "democrat",   fourth: "senator" },
+    { first: " mark r. warner",     second: "virginia",     third: "democrat",   fourth: "senator" },
+    { first: " raphael g. warnock",     second: "georgia",     third: "democrat",   fourth: "senator" },
+    { first: " elizabeth warren",     second: "massachusetts",     third: "democrat",   fourth: "senator" },
+    { first: " peter welch",     second: "vermont",     third: "democrat",   fourth: "senator" },
+    { first: " sheldon whitehouse",     second: "rhode island",     third: "democrat",   fourth: "senator" },
+    { first: " roger f. wicker",     second: "mississippi",     third: "republican",   fourth: "senator" },
+    { first: " ron wyden",     second: "oregon",     third: "democrat",   fourth: "senator" },
+    { first: " todd young",     second: "indiana",     third: "republican",   fourth: "senator" },
+
+
+    { first: " alma  adams",     second: "north carolina",     third: "democrat",   fourth: "representative" },
+    { first: " robert  aderholt",     second: "alabama",     third: "democrat",   fourth: "representative" },
+    { first: " pete  aguilar",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " mark  alford",     second: "missouri",     third: "democrat",   fourth: "representative" },
+    { first: " rick  allen",     second: "georgia",     third: "democrat",   fourth: "representative" },
+    { first: " gabe  amo",     second: "rhode island",     third: "democrat",   fourth: "representative" },
+    { first: " mark  amodei",     second: "nevada",     third: "democrat",   fourth: "representative" },
+    { first: " yassamin  ansari",     second: "arizona",     third: "democrat",   fourth: "representative" },
+    { first: " jodey  arrington",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " jake  auchincloss",     second: "massachusetts",     third: "democrat",   fourth: "representative" },
+    { first: " brian  babin",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " don  bacon",     second: "nebraska",     third: "democrat",   fourth: "representative" },
+    { first: " james  baird",     second: "indiana",     third: "democrat",   fourth: "representative" },
+    { first: " troy  balderson",     second: "ohio",     third: "democrat",   fourth: "representative" },
+    { first: " becca  balint",     second: "vermont at",     third: "democrat",   fourth: "representative" },
+    { first: " andy  barr",     second: "kentucky",     third: "democrat",   fourth: "representative" },
+    { first: " nanette  barragan",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " tom  barrett",     second: "michigan",     third: "democrat",   fourth: "representative" },
+    { first: " michael  baumgartner",     second: "washington",     third: "democrat",   fourth: "representative" },
+    { first: " aaron  bean",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " joyce  beatty",     second: "ohio",     third: "democrat",   fourth: "representative" },
+    { first: " nicholas  begich",     second: "alaska at",     third: "democrat",   fourth: "representative" },
+    { first: " wesley  bell",     second: "missouri",     third: "democrat",   fourth: "representative" },
+    { first: " cliff  bentz",     second: "oregon",     third: "democrat",   fourth: "representative" },
+    { first: " ami  bera",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " jack  bergman",     second: "michigan",     third: "democrat",   fourth: "representative" },
+    { first: " donald  beyer",     second: "virginia",     third: "democrat",   fourth: "representative" },
+    { first: " stephanie  bice",     second: "oklahoma",     third: "democrat",   fourth: "representative" },
+    { first: " andy  biggs",     second: "arizona",     third: "democrat",   fourth: "representative" },
+    { first: " sheri  biggs",     second: "south carolina",     third: "democrat",   fourth: "representative" },
+    { first: " gus  bilirakis",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " sanford  bishop",     second: "georgia",     third: "democrat",   fourth: "representative" },
+    { first: " lauren  boebert",     second: "colorado",     third: "democrat",   fourth: "representative" },
+    { first: " suzanne  bonamici",     second: "oregon",     third: "democrat",   fourth: "representative" },
+    { first: " mike  bost",     second: "illinois",     third: "democrat",   fourth: "representative" },
+    { first: " brendan  boyle",     second: "pennsylvania",     third: "democrat",   fourth: "representative" },
+    { first: " josh  brecheen",     second: "oklahoma",     third: "democrat",   fourth: "representative" },
+    { first: " robert  bresnahan",     second: "pennsylvania",     third: "democrat",   fourth: "representative" },
+    { first: " shontel  brown",     second: "ohio",     third: "democrat",   fourth: "representative" },
+    { first: " julia  brownley",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " vern  buchanan",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " nikki  budzinski",     second: "illinois",     third: "democrat",   fourth: "representative" },
+    { first: " tim  burchett",     second: "tennessee",     third: "democrat",   fourth: "representative" },
+    { first: " eric  burlison",     second: "missouri",     third: "democrat",   fourth: "representative" },
+    { first: " janelle  bynum",     second: "oregon",     third: "democrat",   fourth: "representative" },
+    { first: " ken  calvert",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " kat  cammack",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " salud  carbajal",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " mike  carey",     second: "ohio",     third: "democrat",   fourth: "representative" },
+    { first: " andre  carson",     second: "indiana",     third: "democrat",   fourth: "representative" },
+    { first: " earl  carter",     second: "georgia",     third: "democrat",   fourth: "representative" },
+    { first: " john  carter",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " troy  carter",     second: "louisiana",     third: "democrat",   fourth: "representative" },
+    { first: " greg  casar",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " ed  case",     second: "hawaii",     third: "democrat",   fourth: "representative" },
+    { first: " sean  casten",     second: "illinois",     third: "democrat",   fourth: "representative" },
+    { first: " kathy  castor",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " joaquin  castro",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " sheila- vacancy  cherfilus-mccormick",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " judy  chu",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " juan  ciscomani",     second: "arizona",     third: "democrat",   fourth: "representative" },
+    { first: " gilbert  cisneros",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " katherine  clark",     second: "massachusetts",     third: "democrat",   fourth: "representative" },
+    { first: " yvette  clarke",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " emanuel  cleaver",     second: "missouri",     third: "democrat",   fourth: "representative" },
+    { first: " ben  cline",     second: "virginia",     third: "democrat",   fourth: "representative" },
+    { first: " michael  cloud",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " james  clyburn",     second: "south carolina",     third: "democrat",   fourth: "representative" },
+    { first: " andrew  clyde",     second: "georgia",     third: "democrat",   fourth: "representative" },
+    { first: " steve  cohen",     second: "tennessee",     third: "democrat",   fourth: "representative" },
+    { first: " tom  cole",     second: "oklahoma",     third: "democrat",   fourth: "representative" },
+    { first: " mike  collins",     second: "georgia",     third: "democrat",   fourth: "representative" },
+    { first: " james  comer",     second: "kentucky",     third: "democrat",   fourth: "representative" },
+    { first: " herbert  conaway",     second: "new jersey",     third: "democrat",   fourth: "representative" },
+    { first: " j.  correa",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " jim  costa",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " joe  courtney",     second: "connecticut",     third: "democrat",   fourth: "representative" },
+    { first: " angie  craig",     second: "minnesota",     third: "democrat",   fourth: "representative" },
+    { first: " elijah  crane",     second: "arizona",     third: "democrat",   fourth: "representative" },
+    { first: " jeff  crank",     second: "colorado",     third: "democrat",   fourth: "representative" },
+    { first: " eric  crawford",     second: "arkansas",     third: "democrat",   fourth: "representative" },
+    { first: " dan  crenshaw",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " jasmine  crockett",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " jason  crow",     second: "colorado",     third: "democrat",   fourth: "representative" },
+    { first: " henry  cuellar",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " sharice  davids",     second: "kansas",     third: "democrat",   fourth: "representative" },
+    { first: " warren  davidson",     second: "ohio",     third: "democrat",   fourth: "representative" },
+    { first: " danny  davis",     second: "illinois",     third: "democrat",   fourth: "representative" },
+    { first: " donald  davis",     second: "north carolina",     third: "democrat",   fourth: "representative" },
+    { first: " madeleine  dean",     second: "pennsylvania",     third: "democrat",   fourth: "representative" },
+    { first: " diana  degette",     second: "colorado",     third: "democrat",   fourth: "representative" },
+    { first: " monica  de la cruz",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " rosa  delauro",     second: "connecticut",     third: "democrat",   fourth: "representative" },
+    { first: " suzan  delbene",     second: "washington",     third: "democrat",   fourth: "representative" },
+    { first: " christopher  deluzio",     second: "pennsylvania",     third: "democrat",   fourth: "representative" },
+    { first: " mark  desaulnier",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " scott  desjarlais",     second: "tennessee",     third: "democrat",   fourth: "representative" },
+    { first: " maxine  dexter",     second: "oregon",     third: "democrat",   fourth: "representative" },
+    { first: " mario  diaz-balart",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " debbie  dingell",     second: "michigan",     third: "democrat",   fourth: "representative" },
+    { first: " lloyd  doggett",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " byron  donalds",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " troy  downing",     second: "montana",     third: "democrat",   fourth: "representative" },
+    { first: " neal  dunn",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " chuck  edwards",     second: "north carolina",     third: "democrat",   fourth: "representative" },
+    { first: " sarah  elfreth",     second: "maryland",     third: "democrat",   fourth: "representative" },
+    { first: " jake  ellzey",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " tom  emmer",     second: "minnesota",     third: "democrat",   fourth: "representative" },
+    { first: " veronica  escobar",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " adriano  espaillat",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " ron  estes",     second: "kansas",     third: "democrat",   fourth: "representative" },
+    { first: " dwight  evans",     second: "pennsylvania",     third: "democrat",   fourth: "representative" },
+    { first: " gabe  evans",     second: "colorado",     third: "democrat",   fourth: "representative" },
+    { first: " mike  ezell",     second: "mississippi",     third: "democrat",   fourth: "representative" },
+    { first: " pat  fallon",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " julie  fedorchak",     second: "north dakota at",     third: "democrat",   fourth: "representative" },
+    { first: " randy  feenstra",     second: "iowa",     third: "democrat",   fourth: "representative" },
+    { first: " cleo  fields",     second: "louisiana",     third: "democrat",   fourth: "representative" },
+    { first: " shomari  figures",     second: "alabama",     third: "democrat",   fourth: "representative" },
+    { first: " randy  fine",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " brad  finstad",     second: "minnesota",     third: "democrat",   fourth: "representative" },
+    { first: " michelle  fischbach",     second: "minnesota",     third: "democrat",   fourth: "representative" },
+    { first: " scott  fitzgerald",     second: "wisconsin",     third: "democrat",   fourth: "representative" },
+    { first: " brian  fitzpatrick",     second: "pennsylvania",     third: "democrat",   fourth: "representative" },
+    { first: " charles  fleischmann",     second: "tennessee",     third: "democrat",   fourth: "representative" },
+    { first: " lizzie  fletcher",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " mike  flood",     second: "nebraska",     third: "democrat",   fourth: "representative" },
+    { first: " vince  fong",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " bill  foster",     second: "illinois",     third: "democrat",   fourth: "representative" },
+    { first: " valerie  foushee",     second: "north carolina",     third: "democrat",   fourth: "representative" },
+    { first: " virginia  foxx",     second: "north carolina",     third: "democrat",   fourth: "representative" },
+    { first: " lois  frankel",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " scott  franklin",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " laura  friedman",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " maxwell  frost",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " russell  fry",     second: "south carolina",     third: "democrat",   fourth: "representative" },
+    { first: " russ  fulcher",     second: "idaho",     third: "democrat",   fourth: "representative" },
+    { first: " clay  fuller",     second: "georgia",     third: "democrat",   fourth: "representative" },
+    { first: " james  gallagher",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " john  garamendi",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " andrew  garbarino",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " jesus  garcia",     second: "illinois",     third: "democrat",   fourth: "representative" },
+    { first: " robert  garcia",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " sylvia  garcia",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " brandon  gill",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " laura  gillen",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " carlos  gimenez",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " jared  golden",     second: "maine",     third: "democrat",   fourth: "representative" },
+    { first: " craig  goldman",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " daniel  goldman",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " jimmy  gomez",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " tony- vacancy  gonzales",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " vicente  gonzalez",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " lance  gooden",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " maggie  goodlander",     second: "new hampshire",     third: "democrat",   fourth: "representative" },
+    { first: " paul  gosar",     second: "arizona",     third: "democrat",   fourth: "representative" },
+    { first: " josh  gottheimer",     second: "new jersey",     third: "democrat",   fourth: "representative" },
+    { first: " sam  graves",     second: "missouri",     third: "democrat",   fourth: "representative" },
+    { first: " adam  gray",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " al  green",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " h.  griffith",     second: "virginia",     third: "democrat",   fourth: "representative" },
+    { first: " adelita  grijalva",     second: "arizona",     third: "democrat",   fourth: "representative" },
+    { first: " glenn  grothman",     second: "wisconsin",     third: "democrat",   fourth: "representative" },
+    { first: " michael  guest",     second: "mississippi",     third: "democrat",   fourth: "representative" },
+    { first: " brett  guthrie",     second: "kentucky",     third: "democrat",   fourth: "representative" },
+    { first: " harriet  hageman",     second: "wyoming at",     third: "democrat",   fourth: "representative" },
+    { first: " abraham  hamadeh",     second: "arizona",     third: "democrat",   fourth: "representative" },
+    { first: " josh  harder",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " mike  haridopolos",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " pat  harrigan",     second: "north carolina",     third: "democrat",   fourth: "representative" },
+    { first: " andy  harris",     second: "maryland",     third: "democrat",   fourth: "representative" },
+    { first: " mark  harris",     second: "north carolina",     third: "democrat",   fourth: "representative" },
+    { first: " diana  harshbarger",     second: "tennessee",     third: "democrat",   fourth: "representative" },
+    { first: " jahana  hayes",     second: "connecticut",     third: "democrat",   fourth: "representative" },
+    { first: " kevin  hern",     second: "oklahoma",     third: "democrat",   fourth: "representative" },
+    { first: " pablo  hernandez",     second: "puerto rico resident",     third: "democrat",   fourth: "representative" },
+    { first: " clay  higgins",     second: "louisiana",     third: "democrat",   fourth: "representative" },
+    { first: " j.  hill",     second: "arkansas",     third: "democrat",   fourth: "representative" },
+    { first: " james  himes",     second: "connecticut",     third: "democrat",   fourth: "representative" },
+    { first: " ashley  hinson",     second: "iowa",     third: "democrat",   fourth: "representative" },
+    { first: " steven  horsford",     second: "nevada",     third: "democrat",   fourth: "representative" },
+    { first: " erin  houchin",     second: "indiana",     third: "democrat",   fourth: "representative" },
+    { first: " chrissy  houlahan",     second: "pennsylvania",     third: "democrat",   fourth: "representative" },
+    { first: " steny  hoyer",     second: "maryland",     third: "democrat",   fourth: "representative" },
+    { first: " val  hoyle",     second: "oregon",     third: "democrat",   fourth: "representative" },
+    { first: " richard  hudson",     second: "north carolina",     third: "democrat",   fourth: "representative" },
+    { first: " jared  huffman",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " bill  huizenga",     second: "michigan",     third: "democrat",   fourth: "representative" },
+    { first: " wesley  hunt",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " jeff  hurd",     second: "colorado",     third: "democrat",   fourth: "representative" },
+    { first: " darrell  issa",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " glenn  ivey",     second: "maryland",     third: "democrat",   fourth: "representative" },
+    { first: " brian  jack",     second: "georgia",     third: "democrat",   fourth: "representative" },
+    { first: " jonathan  jackson",     second: "illinois",     third: "democrat",   fourth: "representative" },
+    { first: " ronny  jackson",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " sara  jacobs",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " john  james",     second: "michigan",     third: "democrat",   fourth: "representative" },
+    { first: " pramila  jayapal",     second: "washington",     third: "democrat",   fourth: "representative" },
+    { first: " hakeem  jeffries",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " dusty  johnson",     second: "south dakota at",     third: "democrat",   fourth: "representative" },
+    { first: " henry  johnson",     second: "georgia",     third: "democrat",   fourth: "representative" },
+    { first: " julie  johnson",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " mike  johnson",     second: "louisiana",     third: "democrat",   fourth: "representative" },
+    { first: " jim  jordan",     second: "ohio",     third: "democrat",   fourth: "representative" },
+    { first: " david  joyce",     second: "ohio",     third: "democrat",   fourth: "representative" },
+    { first: " john  joyce",     second: "pennsylvania",     third: "democrat",   fourth: "representative" },
+    { first: " sydney  kamlager-dove",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " marcy  kaptur",     second: "ohio",     third: "democrat",   fourth: "representative" },
+    { first: " thomas  kean",     second: "new jersey",     third: "democrat",   fourth: "representative" },
+    { first: " william  keating",     second: "massachusetts",     third: "democrat",   fourth: "representative" },
+    { first: " mike  kelly",     second: "pennsylvania",     third: "democrat",   fourth: "representative" },
+    { first: " robin  kelly",     second: "illinois",     third: "democrat",   fourth: "representative" },
+    { first: " trent  kelly",     second: "mississippi",     third: "democrat",   fourth: "representative" },
+    { first: " mike  kennedy",     second: "utah",     third: "democrat",   fourth: "representative" },
+    { first: " timothy  kennedy",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " ro  khanna",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " jennifer  kiggans",     second: "virginia",     third: "democrat",   fourth: "representative" },
+    { first: " kevin  kiley",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " young  kim",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " kimberlyn  king-hinds",     second: "northern mariana islands",     third: "democrat",   fourth: "representative" },
+    { first: " brad  knott",     second: "north carolina",     third: "democrat",   fourth: "representative" },
+    { first: " raja  krishnamoorthi",     second: "illinois",     third: "democrat",   fourth: "representative" },
+    { first: " david  kustoff",     second: "tennessee",     third: "democrat",   fourth: "representative" },
+    { first: " darin  lahood",     second: "illinois",     third: "democrat",   fourth: "representative" },
+    { first: " nick  lalota",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " greg  landsman",     second: "ohio",     third: "democrat",   fourth: "representative" },
+    { first: " nicholas  langworthy",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " rick  larsen",     second: "washington",     third: "democrat",   fourth: "representative" },
+    { first: " john  larson",     second: "connecticut",     third: "democrat",   fourth: "representative" },
+    { first: " george  latimer",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " robert  latta",     second: "ohio",     third: "democrat",   fourth: "representative" },
+    { first: " michael  lawler",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " laurel  lee",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " summer  lee",     second: "pennsylvania",     third: "democrat",   fourth: "representative" },
+    { first: " susie  lee",     second: "nevada",     third: "democrat",   fourth: "representative" },
+    { first: " teresa  leger fernandez",     second: "new mexico",     third: "democrat",   fourth: "representative" },
+    { first: " julia  letlow",     second: "louisiana",     third: "democrat",   fourth: "representative" },
+    { first: " mike  levin",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " sam  liccardo",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " ted  lieu",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " zoe  lofgren",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " barry  loudermilk",     second: "georgia",     third: "democrat",   fourth: "representative" },
+    { first: " frank  lucas",     second: "oklahoma",     third: "democrat",   fourth: "representative" },
+    { first: " anna paulina  luna",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " morgan  luttrell",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " stephen  lynch",     second: "massachusetts",     third: "democrat",   fourth: "representative" },
+    { first: " nancy  mace",     second: "south carolina",     third: "democrat",   fourth: "representative" },
+    { first: " ryan  mackenzie",     second: "pennsylvania",     third: "democrat",   fourth: "representative" },
+    { first: " seth  magaziner",     second: "rhode island",     third: "democrat",   fourth: "representative" },
+    { first: " nicole  malliotakis",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " celeste  maloy",     second: "utah",     third: "democrat",   fourth: "representative" },
+    { first: " tracey  mann",     second: "kansas",     third: "democrat",   fourth: "representative" },
+    { first: " john  mannion",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " thomas  massie",     second: "kentucky",     third: "democrat",   fourth: "representative" },
+    { first: " brian  mast",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " doris  matsui",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " lucy  mcbath",     second: "georgia",     third: "democrat",   fourth: "representative" },
+    { first: " sarah  mcbride",     second: "delaware at",     third: "democrat",   fourth: "representative" },
+    { first: " michael  mccaul",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " lisa  mcclain",     second: "michigan",     third: "democrat",   fourth: "representative" },
+    { first: " april  mcclain delaney",     second: "maryland",     third: "democrat",   fourth: "representative" },
+    { first: " jennifer  mcclellan",     second: "virginia",     third: "democrat",   fourth: "representative" },
+    { first: " tom  mcclintock",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " betty  mccollum",     second: "minnesota",     third: "democrat",   fourth: "representative" },
+    { first: " richard  mccormick",     second: "georgia",     third: "democrat",   fourth: "representative" },
+    { first: " kristen  mcdonald rivet",     second: "michigan",     third: "democrat",   fourth: "representative" },
+    { first: " addison  mcdowell",     second: "north carolina",     third: "democrat",   fourth: "representative" },
+    { first: " morgan  mcgarvey",     second: "kentucky",     third: "democrat",   fourth: "representative" },
+    { first: " james  mcgovern",     second: "massachusetts",     third: "democrat",   fourth: "representative" },
+    { first: " john  mcguire",     second: "virginia",     third: "democrat",   fourth: "representative" },
+    { first: " lamonica  mciver",     second: "new jersey",     third: "democrat",   fourth: "representative" },
+    { first: " gregory  meeks",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " analilia  mejia",     second: "new jersey",     third: "democrat",   fourth: "representative" },
+    { first: " christian  menefee",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " robert  menendez",     second: "new jersey",     third: "democrat",   fourth: "representative" },
+    { first: " grace  meng",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " mark  messmer",     second: "indiana",     third: "democrat",   fourth: "representative" },
+    { first: " daniel  meuser",     second: "pennsylvania",     third: "democrat",   fourth: "representative" },
+    { first: " kweisi  mfume",     second: "maryland",     third: "democrat",   fourth: "representative" },
+    { first: " carol  miller",     second: "west virginia",     third: "democrat",   fourth: "representative" },
+    { first: " mary  miller",     second: "illinois",     third: "democrat",   fourth: "representative" },
+    { first: " max  miller",     second: "ohio",     third: "democrat",   fourth: "representative" },
+    { first: " mariannette  miller-meeks",     second: "iowa",     third: "democrat",   fourth: "representative" },
+    { first: " cory  mills",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " dave  min",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " john  moolenaar",     second: "michigan",     third: "democrat",   fourth: "representative" },
+    { first: " barry  moore",     second: "alabama",     third: "democrat",   fourth: "representative" },
+    { first: " blake  moore",     second: "utah",     third: "democrat",   fourth: "representative" },
+    { first: " gwen  moore",     second: "wisconsin",     third: "democrat",   fourth: "representative" },
+    { first: " riley  moore",     second: "west virginia",     third: "democrat",   fourth: "representative" },
+    { first: " tim  moore",     second: "north carolina",     third: "democrat",   fourth: "representative" },
+    { first: " nathaniel  moran",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " joseph  morelle",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " kelly  morrison",     second: "minnesota",     third: "democrat",   fourth: "representative" },
+    { first: " jared  moskowitz",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " seth  moulton",     second: "massachusetts",     third: "democrat",   fourth: "representative" },
+    { first: " james  moylan",     second: "guam",     third: "democrat",   fourth: "representative" },
+    { first: " frank  mrvan",     second: "indiana",     third: "democrat",   fourth: "representative" },
+    { first: " kevin  mullin",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " gregory  murphy",     second: "north carolina",     third: "democrat",   fourth: "representative" },
+    { first: " jerrold  nadler",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " richard  neal",     second: "massachusetts",     third: "democrat",   fourth: "representative" },
+    { first: " joe  neguse",     second: "colorado",     third: "democrat",   fourth: "representative" },
+    { first: " troy  nehls",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " dan  newhouse",     second: "washington",     third: "democrat",   fourth: "representative" },
+    { first: " donald  norcross",     second: "new jersey",     third: "democrat",   fourth: "representative" },
+    { first: " ralph  norman",     second: "south carolina",     third: "democrat",   fourth: "representative" },
+    { first: " eleanor  norton",     second: "district of columbia",     third: "democrat",   fourth: "representative" },
+    { first: " zachary  nunn",     second: "iowa",     third: "democrat",   fourth: "representative" },
+    { first: " jay  obernolte",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " alexandria  ocasio-cortez",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " andrew  ogles",     second: "tennessee",     third: "democrat",   fourth: "representative" },
+    { first: " johnny  olszewski",     second: "maryland",     third: "democrat",   fourth: "representative" },
+    { first: " ilhan  omar",     second: "minnesota",     third: "democrat",   fourth: "representative" },
+    { first: " robert  onder",     second: "missouri",     third: "democrat",   fourth: "representative" },
+    { first: " burgess  owens",     second: "utah",     third: "democrat",   fourth: "representative" },
+    { first: " frank  pallone",     second: "new jersey",     third: "democrat",   fourth: "representative" },
+    { first: " gary  palmer",     second: "alabama",     third: "democrat",   fourth: "representative" },
+    { first: " jimmy  panetta",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " chris  pappas",     second: "new hampshire",     third: "democrat",   fourth: "representative" },
+    { first: " jimmy  patronis",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " nancy  pelosi",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " marie  perez",     second: "washington",     third: "democrat",   fourth: "representative" },
+    { first: " scott  perry",     second: "pennsylvania",     third: "democrat",   fourth: "representative" },
+    { first: " scott  peters",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " brittany  pettersen",     second: "colorado",     third: "democrat",   fourth: "representative" },
+    { first: " august  pfluger",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " chellie  pingree",     second: "maine",     third: "democrat",   fourth: "representative" },
+    { first: " stacey  plaskett",     second: "virgin islands",     third: "democrat",   fourth: "representative" },
+    { first: " mark  pocan",     second: "wisconsin",     third: "democrat",   fourth: "representative" },
+    { first: " nellie  pou",     second: "new jersey",     third: "democrat",   fourth: "representative" },
+    { first: " ayanna  pressley",     second: "massachusetts",     third: "democrat",   fourth: "representative" },
+    { first: " mike  quigley",     second: "illinois",     third: "democrat",   fourth: "representative" },
+    { first: " aumua amata  radewagen",     second: "american samoa",     third: "democrat",   fourth: "representative" },
+    { first: " delia  ramirez",     second: "illinois",     third: "democrat",   fourth: "representative" },
+    { first: " emily  randall",     second: "washington",     third: "democrat",   fourth: "representative" },
+    { first: " jamie  raskin",     second: "maryland",     third: "democrat",   fourth: "representative" },
+    { first: " guy  reschenthaler",     second: "pennsylvania",     third: "democrat",   fourth: "representative" },
+    { first: " josh  riley",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " luz  rivas",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " harold  rogers",     second: "kentucky",     third: "democrat",   fourth: "representative" },
+    { first: " mike  rogers",     second: "alabama",     third: "democrat",   fourth: "representative" },
+    { first: " john  rose",     second: "tennessee",     third: "democrat",   fourth: "representative" },
+    { first: " deborah  ross",     second: "north carolina",     third: "democrat",   fourth: "representative" },
+    { first: " david  rouzer",     second: "north carolina",     third: "democrat",   fourth: "representative" },
+    { first: " chip  roy",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " raul  ruiz",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " michael a.  rulli",     second: "ohio",     third: "democrat",   fourth: "representative" },
+    { first: " john  rutherford",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " patrick  ryan",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " maria  salazar",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " andrea  salinas",     second: "oregon",     third: "democrat",   fourth: "representative" },
+    { first: " linda  sanchez",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " steve  scalise",     second: "louisiana",     third: "democrat",   fourth: "representative" },
+    { first: " mary gay  scanlon",     second: "pennsylvania",     third: "democrat",   fourth: "representative" },
+    { first: " janice  schakowsky",     second: "illinois",     third: "democrat",   fourth: "representative" },
+    { first: " derek  schmidt",     second: "kansas",     third: "democrat",   fourth: "representative" },
+    { first: " bradley  schneider",     second: "illinois",     third: "democrat",   fourth: "representative" },
+    { first: " hillary  scholten",     second: "michigan",     third: "democrat",   fourth: "representative" },
+    { first: " kim  schrier",     second: "washington",     third: "democrat",   fourth: "representative" },
+    { first: " david  schweikert",     second: "arizona",     third: "democrat",   fourth: "representative" },
+    { first: " austin  scott",     second: "georgia",     third: "democrat",   fourth: "representative" },
+    { first: " david- vacancy  scott",     second: "georgia",     third: "democrat",   fourth: "representative" },
+    { first: " robert  scott",     second: "virginia",     third: "democrat",   fourth: "representative" },
+    { first: " keith  self",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " pete  sessions",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " terri  sewell",     second: "alabama",     third: "democrat",   fourth: "representative" },
+    { first: " brad  sherman",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " jefferson  shreve",     second: "indiana",     third: "democrat",   fourth: "representative" },
+    { first: " lateefah  simon",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " michael  simpson",     second: "idaho",     third: "democrat",   fourth: "representative" },
+    { first: " adam  smith",     second: "washington",     third: "democrat",   fourth: "representative" },
+    { first: " adrian  smith",     second: "nebraska",     third: "democrat",   fourth: "representative" },
+    { first: " christopher  smith",     second: "new jersey",     third: "democrat",   fourth: "representative" },
+    { first: " jason  smith",     second: "missouri",     third: "democrat",   fourth: "representative" },
+    { first: " lloyd  smucker",     second: "pennsylvania",     third: "democrat",   fourth: "representative" },
+    { first: " eric  sorensen",     second: "illinois",     third: "democrat",   fourth: "representative" },
+    { first: " darren  soto",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " victoria  spartz",     second: "indiana",     third: "democrat",   fourth: "representative" },
+    { first: " melanie  stansbury",     second: "new mexico",     third: "democrat",   fourth: "representative" },
+    { first: " greg  stanton",     second: "arizona",     third: "democrat",   fourth: "representative" },
+    { first: " pete  stauber",     second: "minnesota",     third: "democrat",   fourth: "representative" },
+    { first: " elise  stefanik",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " bryan  steil",     second: "wisconsin",     third: "democrat",   fourth: "representative" },
+    { first: " w.  steube",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " haley  stevens",     second: "michigan",     third: "democrat",   fourth: "representative" },
+    { first: " marilyn  strickland",     second: "washington",     third: "democrat",   fourth: "representative" },
+    { first: " dale  strong",     second: "alabama",     third: "democrat",   fourth: "representative" },
+    { first: " marlin  stutzman",     second: "indiana",     third: "democrat",   fourth: "representative" },
+    { first: " suhas  subramanyam",     second: "virginia",     third: "democrat",   fourth: "representative" },
+    { first: " thomas r.  suozzi",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " eric- vacancy  swalwell",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " emilia  sykes",     second: "ohio",     third: "democrat",   fourth: "representative" },
+    { first: " mark  takano",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " david  taylor",     second: "ohio",     third: "democrat",   fourth: "representative" },
+    { first: " claudia  tenney",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " shri  thanedar",     second: "michigan",     third: "democrat",   fourth: "representative" },
+    { first: " bennie  thompson",     second: "mississippi",     third: "democrat",   fourth: "representative" },
+    { first: " glenn  thompson",     second: "pennsylvania",     third: "democrat",   fourth: "representative" },
+    { first: " mike  thompson",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " thomas  tiffany",     second: "wisconsin",     third: "democrat",   fourth: "representative" },
+    { first: " william  timmons",     second: "south carolina",     third: "democrat",   fourth: "representative" },
+    { first: " dina  titus",     second: "nevada",     third: "democrat",   fourth: "representative" },
+    { first: " rashida  tlaib",     second: "michigan",     third: "democrat",   fourth: "representative" },
+    { first: " jill  tokuda",     second: "hawaii",     third: "democrat",   fourth: "representative" },
+    { first: " paul  tonko",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " norma  torres",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " ritchie  torres",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " lori  trahan",     second: "massachusetts",     third: "democrat",   fourth: "representative" },
+    { first: " derek  tran",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " michael  turner",     second: "ohio",     third: "democrat",   fourth: "representative" },
+    { first: " lauren  underwood",     second: "illinois",     third: "democrat",   fourth: "representative" },
+    { first: " david  valadao",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " jefferson  van drew",     second: "new jersey",     third: "democrat",   fourth: "representative" },
+    { first: " beth  van duyne",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " matt  van epps",     second: "tennessee",     third: "democrat",   fourth: "representative" },
+    { first: " derrick  van orden",     second: "wisconsin",     third: "democrat",   fourth: "representative" },
+    { first: " juan  vargas",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " gabe  vasquez",     second: "new mexico",     third: "democrat",   fourth: "representative" },
+    { first: " marc  veasey",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " nydia  velazquez",     second: "new york",     third: "democrat",   fourth: "representative" },
+    { first: " eugene  vindman",     second: "virginia",     third: "democrat",   fourth: "representative" },
+    { first: " ann  wagner",     second: "missouri",     third: "democrat",   fourth: "representative" },
+    { first: " tim  walberg",     second: "michigan",     third: "democrat",   fourth: "representative" },
+    { first: " james  walkinshaw",     second: "virginia",     third: "democrat",   fourth: "representative" },
+    { first: " debbie  wasserman schultz",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " maxine  waters",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " bonnie  watson coleman",     second: "new jersey",     third: "democrat",   fourth: "representative" },
+    { first: " randy  weber",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " daniel  webster",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " bruce  westerman",     second: "arkansas",     third: "democrat",   fourth: "representative" },
+    { first: " george  whitesides",     second: "california",     third: "democrat",   fourth: "representative" },
+    { first: " tony  wied",     second: "wisconsin",     third: "democrat",   fourth: "representative" },
+    { first: " nikema  williams",     second: "georgia",     third: "democrat",   fourth: "representative" },
+    { first: " roger  williams",     second: "texas",     third: "democrat",   fourth: "representative" },
+    { first: " frederica  wilson",     second: "florida",     third: "democrat",   fourth: "representative" },
+    { first: " joe  wilson",     second: "south carolina",     third: "democrat",   fourth: "representative" },
+    { first: " robert  wittman",     second: "virginia",     third: "democrat",   fourth: "representative" },
+    { first: " steve  womack",     second: "arkansas",     third: "democrat",   fourth: "representative" },
+    { first: " rudy  yakym",     second: "indiana",     third: "democrat",   fourth: "representative" },
+    { first: " ryan  zinke",     second: "montana",     third: "democrat",   fourth: "representative" },
+
+    ];
+
+
+
+
+    const cardsElement = document.getElementById("cards");
+    const panelElement = document.querySelector(".panel");
+    const scoreElement = document.getElementById("score");
+    const messageElement = document.getElementById("message");
+
+    let cards = [];
+    let selectedCard = null;
+    let matchedCards = new Set();
+    let matchedPartners = new Map();
+    let matchCredits = 0;
+    let incorrectPenalties = 0;
+    let roundEnding = false;
+    let glowTimer = null;
+    let resetTimer = null;
+
+    function shuffle(items) {
+      const copy = [...items];
+      for (let index = copy.length - 1; index > 0; index--) {
+        const randomIndex = Math.floor(Math.random() * (index + 1));
+        [copy[index], copy[randomIndex]] = [copy[randomIndex], copy[index]];
+      }
+      return copy;
+    }
+
+    function createRound() {
+      clearTimeout(glowTimer);
+      clearTimeout(resetTimer);
+      roundEnding = false;
+      panelElement.classList.remove("victory-glow");
+      cardsElement.classList.remove("fade-away");
+
+      const usableRows = QUIZ_ROWS.filter(row =>
+        row.first && [row.second, row.third, row.fourth].some(value =>
+          typeof value === "string" && value.trim() !== ""
+        )
+      );
+
+      if (usableRows.length < 5) {
+        messageElement.textContent = "Please add at least five rows with a first value and one clue.";
+        return;
+      }
+
+      cards = [];
+      selectedCard = null;
+      matchedCards = new Set();
+      matchedPartners = new Map();
+      messageElement.classList.remove("success");
+
+      shuffle(usableRows).slice(0, 5).forEach((row, index) => {
+        /*
+          Every card still receives a unique ID so duplicate visible cards
+          remain separate objects. Matching itself uses the required clue
+          value, allowing identical clue cards to be interchangeable.
+        */
+        const pairId = Date.now() + "-" + index + "-" + Math.random();
+        const validAnswers = [row.second, row.third, row.fourth].filter(value =>
+          typeof value === "string" && value.trim() !== ""
+        );
+        const clue = validAnswers[Math.floor(Math.random() * validAnswers.length)];
+
+        cards.push({
+          id: pairId + "-first",
+          pairId: pairId,
+          label: row.first,
+          type: "first",
+          /*
+            Keep every nonblank clue from the original row. The visible clue
+            used in this round does not limit which value the first card accepts.
+          */
+          validAnswers: validAnswers
+        });
+
+        cards.push({
+          id: pairId + "-clue",
+          pairId: pairId,
+          label: clue,
+          type: "clue"
+        });
+      });
+
+      cards = shuffle(cards);
+      messageElement.textContent = "Choose any card to begin.";
+      renderCards();
+    }
+
+    function renderCards() {
+      cardsElement.innerHTML = "";
+
+      cards.forEach((card, index) => {
+        const button = document.createElement("button");
+        const isSelected = selectedCard && selectedCard.id === card.id;
+        const isMatched = matchedCards.has(card.id);
+
+        button.type = "button";
+        button.className =
+          "card" +
+          (isSelected ? " selected" : "") +
+          (isMatched ? " matched" : "");
+        button.setAttribute("aria-pressed", String(Boolean(isSelected)));
+        if (isMatched) {
+          button.setAttribute("aria-label", "Unlock " + card.label + " and its current match");
+          button.title = "Return both matched tiles to the board";
+        }
+
+        const number = document.createElement("span");
+        number.className = "number";
+        number.textContent = String(index + 1).padStart(2, "0");
+
+        const label = document.createElement("span");
+        label.className = "label";
+        label.textContent = card.label;
+
+        const mark = document.createElement("span");
+        mark.className = "mark";
+        mark.textContent = isMatched ? "UNLOCK" : isSelected ? "●" : "";
+
+        button.append(number, label, mark);
+        button.addEventListener("click", () => chooseCard(card));
+        cardsElement.appendChild(button);
+      });
+    }
+
+    function chooseCard(card) {
+      if (roundEnding) return;
+
+      if (matchedCards.has(card.id)) {
+        unlockMatch(card);
+        return;
+      }
+
+      if (!selectedCard) {
+        selectedCard = card;
+        messageElement.textContent = 'Now find the match for "' + card.label + '."';
+        renderCards();
+        return;
+      }
+
+      if (selectedCard.id === card.id) {
+        selectedCard = null;
+        messageElement.textContent = "Selection cleared. Choose another card.";
+        renderCards();
+        return;
+      }
+
+      const firstCard =
+        selectedCard.type === "first" ? selectedCard :
+        card.type === "first" ? card : null;
+
+      const clueCard =
+        selectedCard.type === "clue" ? selectedCard :
+        card.type === "clue" ? card : null;
+
+      /*
+        Identically worded clue cards are interchangeable. A first-category
+        card accepts any nonblank clue from its complete original row. For
+        example, Blueberry accepts "Blue", "Fruit", or "Berry", regardless
+        of which row produced the particular visible clue card.
+      */
+      const correct =
+        firstCard !== null &&
+        clueCard !== null &&
+        firstCard.validAnswers.includes(clueCard.label);
+
+      if (correct) {
+        matchedCards.add(selectedCard.id);
+        matchedCards.add(card.id);
+        matchedPartners.set(selectedCard.id, card.id);
+        matchedPartners.set(card.id, selectedCard.id);
+        matchCredits += 10;
+        updateScore();
+        selectedCard = null;
+
+        if (matchedCards.size === 10) {
+          messageElement.textContent = "Perfect! All five matches found — new round starting…";
+          messageElement.classList.add("success");
+          roundEnding = true;
+        } else {
+          messageElement.textContent = "Correct! +10 points";
+        }
+      } else {
+        incorrectPenalties += 2;
+        updateScore();
+        selectedCard = null;
+        messageElement.textContent = "Not a match. Try again. −2 points";
+      }
+
+      renderCards();
+
+      if (roundEnding) {
+        panelElement.classList.add("victory-glow");
+        glowTimer = setTimeout(() => {
+          cardsElement.classList.add("fade-away");
+        }, 900);
+        resetTimer = setTimeout(createRound, 1800);
+      }
+    }
+
+    function unlockMatch(card) {
+      const partnerId = matchedPartners.get(card.id);
+      if (!partnerId) return;
+
+      const partner = cards.find(item => item.id === partnerId);
+      matchedCards.delete(card.id);
+      matchedCards.delete(partnerId);
+      matchedPartners.delete(card.id);
+      matchedPartners.delete(partnerId);
+      matchCredits -= 10;
+      selectedCard = null;
+      messageElement.classList.remove("success");
+      messageElement.textContent =
+        'Unlocked "' + card.label + '" and "' + partner.label +
+        '.” Both tiles can now be matched again.';
+      updateScore();
+      renderCards();
+    }
+
+    function updateScore() {
+      scoreElement.textContent = Math.max(0, matchCredits - incorrectPenalties);
+    }
+
+    document.getElementById("new-round").addEventListener("click", createRound);
+    createRound();
+  </script>
+</body>
+</html>
+
+
+<!--
+make a quiz game using html, javascript, css
+
+reload a winning grid automatically
+
+made an option to UNLOCK matches in case the clues worked but didnt fit the overall scheme
+
+have a button to list all data
+
+reset the board once all matches are made
+
+
+first try, three categories.
+
+each row will have information in all three categories
+
+the game will choose five rows at random
+
+each selected row will match the first category to either the second category or the third category (at random)
+
+the first category and its second or third category match can appear anywhere in the ten spots
+
+all of the words in the first category will be unique but second and third category may not be.
+
+i would like the player be able to match a second or third category value to its first category match even if they repeat
+
+for example, apple - red, beet - red.  if these words appear anywhere in a round i would like the user to be able to pick either "red" and match it to either "beet" or "apple", leaving the other "red" to be matched.
+
+
+sample list:
+
+apple  red  fruit
+banana  yellow  fruit
+broccoli  green   vegetable
+lemon   yellow   fruit
+beet   red    vegetable
+
+
+sample output
+
+
+1.apple        6. broccoli
+2.green        7. lemon
+3.fruit        8.  yellow
+4.vegetable        9.  fruit
+5.banana        10.  beet
+
+im using fruit as an example, but im really looking for a structure because im going to repeat this for a variety of trivia categories
+
+im assuming the list can be hardcoded in the javascript.  i want the entire game to exist on one page, with a cookie in local storage keeping track of each session date and score before closing the page
+
+
+Fixed! Each first-category card now accepts either associated value from its complete row:
+
+Blueberry matches Blue or Fruit
+Grape matches Purple or Fruit
+Banana matches Yellow or Fruit
+Lemon matches Yellow or Fruit
+Selection order does not matter
+
+-->
