@@ -102,6 +102,29 @@
       box-shadow: 0 0 34px rgba(53, 242, 255, 0.6);
       outline: none;
     }
+    .serialkiller {
+      display: inline-block;
+      padding: 1rem 1.45rem;
+      border: 1px solid var(--red);
+      border-radius: 10px;
+      color: #ff1016;
+      background: var(--red);
+      box-shadow: 0 0 22px rgba(253, 50, 50, 0.68);
+      font-size: clamp(1rem, 3vw, 1.25rem);
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+    }
+
+    .serialkiller:hover,
+    .serialkiller:focus-visible{
+      transform: translateY(-3px) scale(1.02);
+      background: #a6faff;
+      box-shadow: 0 0 34px rgba(53, 242, 255, 0.6);
+      outline: none;
+    }
+
   </style>
 </head>
 <body>
@@ -116,6 +139,11 @@
     <p>
     <a href="matching_quiz_movies.html">
       Movie Madness!
+    </a>
+    </p>
+    <p>
+    <a class = "serialkiller" href="matching_quiz_serial_killers.html">
+      SERIAL KILLERS
     </a>
     </p>
   </main>

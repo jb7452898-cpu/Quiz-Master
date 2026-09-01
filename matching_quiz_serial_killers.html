@@ -7,14 +7,17 @@
   <style>
     :root {
       color-scheme: dark;
-      --background: #0d0f0e;
-      --panel: #171917;
-      --card: #101210;
-      --text: #f5f1e8;
+      --background: #000000;
+      --panel: #000000;
+      --card: #000000;
+      --text: #f50000;
       --muted: #9d9a91;
-      --border: #393c37;
+      --border: #390000;
       --green: #c8f25b;
       --orange: #ff8a4c;
+      --red: #ff1010;
+      --redagain: #ff0000;
+      --purple: #ff00aa;
     }
     * { box-sizing: border-box; }
     body {
@@ -40,7 +43,7 @@
     }
     .eyebrow {
       margin: 0 0 10px;
-      color: var(--green);
+      color: var(--red);
       font-size: .72rem;
       font-weight: bold;
       letter-spacing: .16em;
@@ -48,10 +51,8 @@
     }
     h1 {
       margin: 0;
-      color: rgb(50,100,170);
       font: 500 clamp(2.6rem, 7vw, 5rem)/.95 Georgia, serif;
       letter-spacing: -.04em;
-
     }
     .subtitle { margin: 16px 0 0; color: var(--muted); }
     .score-box {
@@ -77,17 +78,17 @@
       transition: border-color .35s, box-shadow .35s, background .35s;
     }
     .panel.victory-glow {
-      border-color: var(--green);
-      background: #1b2115;
+      border-color: var(--redagain);
+      background: #1b0000;
       box-shadow:
-        0 0 18px rgba(200, 242, 91, .75),
-        0 0 48px rgba(200, 242, 91, .35),
-        10px 10px 0 #090a09;
+        0 0 18px rgba(200, 0, 91, .75),
+        0 0 48px rgba(249 ,0, 100, .35),
+        10px 10px 0 #ff0a09;
       animation: victoryPulse .7s ease-in-out infinite alternate;
     }
     @keyframes victoryPulse {
       from { filter: brightness(1); }
-      to { filter: brightness(1.18); }
+      to { filter: brightness(2.18); }
     }
     .panel-heading {
       display: flex;
@@ -99,8 +100,8 @@
     #new-round {
       padding: 11px 18px;
       color: #10120e;
-      background: var(--green);
-      border: 1px solid var(--green);
+      background: var(--red);
+      border: 1px solid var(--red);
       font-weight: bold;
       cursor: pointer;
     }
@@ -112,10 +113,10 @@
       margin: 22px 0 16px;
       padding: 0 14px;
       background: #20211e;
-      border-left: 3px solid var(--orange);
+      border-left: 3px solid var(--red);
       color: #ded8cc;
     }
-    #message.success { border-color: var(--green); color: var(--green); }
+    #message.success { border-color: var(--muted); color: var(--purple); }
     #cards {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -139,21 +140,21 @@
     .card:hover:not(:disabled) { border-color: #777d70; transform: translateY(-2px); }
     .card.selected { border-color: var(--orange); background: #241b16; }
     .card.matched {
-      border-color: #405126;
-      background: #1a2112;
-      color: #a9c95f;
+      border-color: #f00000;
+      background: #550010;
+      color: #ff00aa;
       cursor: pointer;
     }
-    .card.matched:hover { border-color: var(--green); transform: translateY(-2px); }
+    .card.matched:hover { border-color: var(--purple); transform: translateY(-2px); }
     .card.matched .mark {
-      color: var(--green);
+      color: var(--purple);
       font-size: .68rem;
       font-weight: bold;
       letter-spacing: .06em;
     }
     .number { color: #6d7169; font: .78rem monospace; }
     .label { font-size: clamp(1rem, 2vw, 1.25rem); font-weight: bold; }
-    .mark { color: var(--green); text-align: right; font-size: 1.1rem; }
+    .mark { color: var(--purple); text-align: right; font-size: 1.1rem; }
     .instructions { margin: 22px 2px 0; color: var(--muted); font-size: .85rem; }
     @media (max-width: 680px) {
       .game { width: min(100% - 20px, 1050px); padding-top: 24px; }
@@ -168,10 +169,12 @@
   <main class="game">
     <header>
       <div>
-        <h1>MOVIE MADNESS! <img src="movie-projector.png" alt="" style = "width: 60px; height 60px;"></h1>
-        <h1 class = "eyebrow">Find the hidden pairs.</h1>
+
+        <p class="eyebrow">SERIAL KILLERS<img src="serial.png" alt="" style = "width: 60px; height 60px;"></p>
+        <p><img src="warning.png" alt="" style = "width: 60px; height 60px;">WARNING: Players under 17 need parents permission to play this game</p>
+        <!--- <h1>Find the hidden pairs.</h1> /--->
         <p class="subtitle">Five source terms. Five clues. Ten shuffled positions.</p>
-        <p>NOTE:  Some clues fit better than others! (you can have a match that's technically correct but if you still can't solve the game, you may have to UNLOCK and try again!)</p>
+        <p>WARNING:  Some clues fit better than others! (you can have a match that's technically correct but if you still can't solve the game, you may have to UNLOCK and try again!)</p>
       </div>
       <div class="score-box">
         <span>Score</span>
@@ -200,29 +203,25 @@
       Leave fourth blank (or omit it) when a row needs only three categories.
     */
     const QUIZ_ROWS = [
-    { first: "jaws",     second: "steven spielberg",     third: "john williams",   fourth: "1975" },
-    { first: "braveheart",     second: "catherine mccormack",     third: "best picture",   fourth: "longshanks" },
-    { first: "star wars",     second: "flash gordon",     third: "grogu",   fourth: "rian johnson" },
-    { first: "heat",     second: "michael mann",     third: "elliot goldenthal",   fourth: "1995" },
-    { first: "the dark knight",     second: "christopher nolan",     third: "michael caine",   fourth: "2008" },
-    { first: "the fast and the furious",     second: "rob cohen",     third: "vin diesel",   fourth: "2001" },
-    { first: "titanic",     second: "james cameron",     third: "kate winslet",   fourth: "leonardo dicaprio" },
-    { first: "true romance",     second: "tony scott",     third: "quentin tarantino",   fourth: "roger avary" },
-    { first: "the piano",     second: "jane campion",     third: "harvey keitel",   fourth: "1993" },
-    /* 1999 */
-    { first: "the matrix",     second: "keanu reeves",     third: "the wachowski bros",   fourth: "red pill or blue" },
-    { first: "fight club",     second: "david fincher",     third: "brad pitt",   fourth: "edward norton" },
-    { first: "good will hunting",     second: "gus van sant",     third: "ben affleck",   fourth: "minnie driver" },
-    { first: "the talented mr ripley",     second: "patricia highsmith",     third: "anthony minghella",   fourth: "matt damon" },
-    { first: "eyes wide shut",     second: "stanley kubrick",     third: "nicole kidman",   fourth: "1999" },
-    { first: "election",     second: "matthew broderick",     third: "alexander payne",   fourth: "1999" },
-    { first: "american pie",     second: "eugene levy",     third: "alyson hannigan",   fourth: "seann william scott" },
-    { first: "american beauty",     second: "kevin spacey",     third: "sam mendes",   fourth: "best picture" },
-    { first: "office space",     second: "mike judge",     third: "ron livingston",   fourth: "jennifer aniston" },
-    { first: "the insider",     second: "michael mann",     third: "al pacino",   fourth: "russell crowe" },
-    /* 1992*/
-    { first: "glengarry glen ross",     second: "david mamet",     third: "al pacino",   fourth: "kevin spacey" },
-
+    { first: "ted bundy",     second: "vw bus",     third: "victims included 30 young women",   fourth: "sex with corpses" },
+    { first: "jeffery dalhmer",     second: "drinking problem",     third: "milwuakee cannibal",   fourth: "wisconsin" },
+    { first: "john wayne gacy",     second: "killer clown",     third: "handcuffs",   fourth: "sentence: lethal injection" },
+    { first: "gary ridgway",     second: "green river killer",     third: "washington state",   fourth: "necrophiliac" },
+    { first: "dean coril",     second: "candyman",     third: "texas",   fourth: "had teenage accomplices" },
+    { first: "dennis rader",     second: "btk killer",     third: "kansas",   fourth: "suffocated some victims with plastic bag" },
+    { first: "edmund kemper",     second: "the co-ed killer",     third: "victims included grandparents",   fourth: "this killer requested the death penalty" },
+    { first: "richard ramierez",     second: "night stalker",     third: "california",   fourth: "the valley intruder" },
+    { first: "david berkowitz",     second: "son of sam",     third: "new york city",   fourth: ".44 caliber revolver" },
+    { first: "aileen wuornos",     second: "florida",     third: "borderline/antisocial personality disorder",   fourth: "declined last meal and instead requested cup of coffee" },
+    { first: "rodney alcala",     second: "dating game killer",     third: "went awol from fort bragg",   fourth: "iq estimated at 135 by military psychologist" },
+    { first: "arthur shawcross",     second: "genesee river killer",     third: "new york",   fourth: "derived sexual arousal from setting fires" },
+    { first: "randy kraft",     second: "scorecard killer",     third: "california",   fourth: "was a republican as a teenager" },
+    { first: "william bonin",     second: "freeway killer",     third: "southern california",   fourth: "victims included male prostitutes" },
+    { first: "patrick kearney",     second: "first victim was skinned and dismemberd with an x-acto knife around christmas ",     third: "trash bag killer",   fourth: "often engaged in necrophilia" },
+    { first: "hh holmes",     second: "murder castle",     third: "chicago worlds fair",   fourth: "1893" },
+    { first: "albert fish",     second: "brooklyn vampire",     third: "gray man",   fourth: "werewolf of wysteria" },
+    { first: "ed gein",     second: "the texas chainsaw massacre",     third: "wisconsin",   fourth: "grave robber" },
+    { first: "the zodiac killer",     second: "used cryptograms",     third: "signed letters with gunsight crosshairs symbol",   fourth: "used .22 caliber pistol" }
 
 
     ];
