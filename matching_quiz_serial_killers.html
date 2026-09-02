@@ -140,9 +140,9 @@
     .card:hover:not(:disabled) { border-color: #777d70; transform: translateY(-2px); }
     .card.selected { border-color: var(--orange); background: #241b16; }
     .card.matched {
-      border-color: #f00000;
-      background: #550010;
-      color: #ff00aa;
+      border-color: #405126;
+      background: #1a2112;
+      color: #a9c95f;
       cursor: pointer;
     }
     .card.matched:hover { border-color: var(--purple); transform: translateY(-2px); }
@@ -169,12 +169,12 @@
   <main class="game">
     <header>
       <div>
-
         <p class="eyebrow">SERIAL KILLERS<img src="serial.png" alt="" style = "width: 60px; height 60px;"></p>
         <p><img src="warning.png" alt="" style = "width: 60px; height 60px;">WARNING: Players under 17 need parents permission to play this game</p>
         <!--- <h1>Find the hidden pairs.</h1> /--->
         <p class="subtitle">Five source terms. Five clues. Ten shuffled positions.</p>
         <p>WARNING:  Some clues fit better than others! (you can have a match that's technically correct but if you still can't solve the game, you may have to UNLOCK and try again!)</p>
+
       </div>
       <div class="score-box">
         <span>Score</span>
@@ -198,30 +198,31 @@
     /*
       EDIT YOUR QUIZ ROWS HERE.
 
-      The first value in every row must be unique.
+      Five unique first values are selected for each round. Duplicate first
+      values may appear in the full list when they have different clues.
       The second, third, and optional fourth values are allowed to repeat.
       Leave fourth blank (or omit it) when a row needs only three categories.
     */
     const QUIZ_ROWS = [
-    { first: "ted bundy",     second: "vw bus",     third: "victims included 30 young women",   fourth: "sex with corpses" },
-    { first: "jeffery dalhmer",     second: "drinking problem",     third: "milwuakee cannibal",   fourth: "wisconsin" },
-    { first: "john wayne gacy",     second: "killer clown",     third: "handcuffs",   fourth: "sentence: lethal injection" },
-    { first: "gary ridgway",     second: "green river killer",     third: "washington state",   fourth: "necrophiliac" },
-    { first: "dean coril",     second: "candyman",     third: "texas",   fourth: "had teenage accomplices" },
-    { first: "dennis rader",     second: "btk killer",     third: "kansas",   fourth: "suffocated some victims with plastic bag" },
-    { first: "edmund kemper",     second: "the co-ed killer",     third: "victims included grandparents",   fourth: "this killer requested the death penalty" },
-    { first: "richard ramierez",     second: "night stalker",     third: "california",   fourth: "the valley intruder" },
-    { first: "david berkowitz",     second: "son of sam",     third: "new york city",   fourth: ".44 caliber revolver" },
-    { first: "aileen wuornos",     second: "florida",     third: "borderline/antisocial personality disorder",   fourth: "declined last meal and instead requested cup of coffee" },
-    { first: "rodney alcala",     second: "dating game killer",     third: "went awol from fort bragg",   fourth: "iq estimated at 135 by military psychologist" },
-    { first: "arthur shawcross",     second: "genesee river killer",     third: "new york",   fourth: "derived sexual arousal from setting fires" },
-    { first: "randy kraft",     second: "scorecard killer",     third: "california",   fourth: "was a republican as a teenager" },
-    { first: "william bonin",     second: "freeway killer",     third: "southern california",   fourth: "victims included male prostitutes" },
-    { first: "patrick kearney",     second: "first victim was skinned and dismemberd with an x-acto knife around christmas ",     third: "trash bag killer",   fourth: "often engaged in necrophilia" },
-    { first: "hh holmes",     second: "murder castle",     third: "chicago worlds fair",   fourth: "1893" },
-    { first: "albert fish",     second: "brooklyn vampire",     third: "gray man",   fourth: "werewolf of wysteria" },
-    { first: "ed gein",     second: "the texas chainsaw massacre",     third: "wisconsin",   fourth: "grave robber" },
-    { first: "the zodiac killer",     second: "used cryptograms",     third: "signed letters with gunsight crosshairs symbol",   fourth: "used .22 caliber pistol" }
+    { first: "ted bundy",     second: "vehicle: vw bus",     third: "victims: young women",   fourth: "mo: necrophilia" },
+    { first: "jeffery dalhmer",     second: "psychiatric profile: alcohol abuse",     third: "alias: milwuakee cannibal",   fourth: "state: wisconsin" },
+    { first: "john wayne gacy",     second: "alias: killer clown",     third: "mo: handcuffs",   fourth: "sentence: lethal injection" },
+    { first: "gary ridgway",     second: "alias: green river killer",     third: "state: washington",   fourth: "mo: necrophilia" },
+    { first: "dean coril",     second: "alias: candyman",     third: "state: texas",   fourth: "mo: teenage accomplices" },
+    { first: "dennis rader",     second: "alias: btk killer",     third: "state: kansas",   fourth: "mo: suffocated some victims with plastic bag" },
+    { first: "edmund kemper",     second: "alias: the co-ed killer",     third: "victims: included grandparents",   fourth: "sentence: accused requested the death penalty" },
+    { first: "richard ramierez",     second: "alias: night stalker",     third: "state: california",   fourth: "alias: the valley intruder" },
+    { first: "david berkowitz",     second: "alias: son of sam",     third: "state: new york city",   fourth: "mo: firearm .44 caliber revolver" },
+    { first: "aileen wuornos",     second: "state: florida",     third: "psychiatric profile: borderline personality disorder",   fourth: "sentence: declined last meal and instead requested cup of coffee" },
+    { first: "rodney alcala",     second: "alias: dating game killer",     third: "military record: went awol from fort bragg",   fourth: "psychiatric profile: iq estimated at 135 by military psychologist" },
+    { first: "arthur shawcross",     second: "alias: genesee river killer",     third: "state: new york",   fourth: "psychiatric profile: pyrophilia" },
+    { first: "randy kraft",     second: "alias: scorecard killer",     third: "state: california",   fourth: "biography: witnesses note subject was a republican as a teenager" },
+    { first: "william bonin",     second: "alias: freeway killer",     third: "state: california",   fourth: "victims: male prostitutes" },
+    { first: "patrick kearney",     second: "victims: (notes) first victim was skinned and dismemberd with an x-acto knife around christmas ",     third: "alias: trash bag killer",   fourth: "psychiatric: necrophilia" },
+    { first: "hh holmes",     second: "locale: murder castle",     third: "locale: chicago worlds fair",   fourth: "1893" },
+    { first: "albert fish",     second: "alias: brooklyn vampire",     third: "alias: gray man",   fourth: "alias: werewolf of wysteria" },
+    { first: "ed gein",     second: "popular culture: the texas chainsaw massacre",     third: "state: wisconsin",   fourth: "mo: grave robber" },
+    { first: "the zodiac killer",     second: "mo: used cryptograms",     third: "mo: signed letters with gunsight crosshairs symbol",   fourth: "mo: firearm .22 caliber pistol" }
 
 
     ];
@@ -263,8 +264,24 @@
         )
       );
 
-      if (usableRows.length < 5) {
-        messageElement.textContent = "Please add at least five rows with a first value and one clue.";
+      /*
+        Shuffle before removing duplicate first values. This means that when
+        several rows share the same first value, any one of those rows can be
+        the version used in a round. Matching ignores capitalization and
+        surrounding spaces when deciding whether first values are duplicates.
+      */
+      const seenFirstValues = new Set();
+      const uniqueRows = shuffle(usableRows).filter(row => {
+        const firstKey = row.first.trim().toLocaleLowerCase();
+        if (seenFirstValues.has(firstKey)) {
+          return false;
+        }
+        seenFirstValues.add(firstKey);
+        return true;
+      });
+
+      if (uniqueRows.length < 5) {
+        messageElement.textContent = "Please add at least five unique first-category names with one clue each.";
         return;
       }
 
@@ -274,7 +291,7 @@
       matchedPartners = new Map();
       messageElement.classList.remove("success");
 
-      shuffle(usableRows).slice(0, 5).forEach((row, index) => {
+      uniqueRows.slice(0, 5).forEach((row, index) => {
         /*
           Every card still receives a unique ID so duplicate visible cards
           remain separate objects. Matching itself uses the required clue
@@ -451,3 +468,5 @@
   </script>
 </body>
 </html>
+
+

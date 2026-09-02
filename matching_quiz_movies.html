@@ -48,10 +48,8 @@
     }
     h1 {
       margin: 0;
-      color: rgb(50,100,170);
       font: 500 clamp(2.6rem, 7vw, 5rem)/.95 Georgia, serif;
       letter-spacing: -.04em;
-
     }
     .subtitle { margin: 16px 0 0; color: var(--muted); }
     .score-box {
@@ -168,8 +166,8 @@
   <main class="game">
     <header>
       <div>
-        <h1>MOVIE MADNESS! <img src="movie-projector.png" alt="" style = "width: 60px; height 60px;"></h1>
-        <h1 class = "eyebrow">Find the hidden pairs.</h1>
+        <p class="eyebrow">Four-category quiz</p>
+        <h1>Find the hidden pairs.</h1>
         <p class="subtitle">Five source terms. Five clues. Ten shuffled positions.</p>
         <p>NOTE:  Some clues fit better than others! (you can have a match that's technically correct but if you still can't solve the game, you may have to UNLOCK and try again!)</p>
       </div>
@@ -195,7 +193,8 @@
     /*
       EDIT YOUR QUIZ ROWS HERE.
 
-      The first value in every row must be unique.
+      Five unique first values are selected for each round. Duplicate first
+      values may appear in the full list when they have different clues.
       The second, third, and optional fourth values are allowed to repeat.
       Leave fourth blank (or omit it) when a row needs only three categories.
     */
@@ -209,6 +208,8 @@
     { first: "titanic",     second: "james cameron",     third: "kate winslet",   fourth: "leonardo dicaprio" },
     { first: "true romance",     second: "tony scott",     third: "quentin tarantino",   fourth: "roger avary" },
     { first: "the piano",     second: "jane campion",     third: "harvey keitel",   fourth: "1993" },
+    { first: "good will hunting", second: "robin williams", third: "matt damon", fourth: "harvard"},
+    { first: "good will hunting", second: "therapist", third: "genius", fourth: "math"},
     /* 1999 */
     { first: "the matrix",     second: "keanu reeves",     third: "the wachowski bros",   fourth: "red pill or blue" },
     { first: "fight club",     second: "david fincher",     third: "brad pitt",   fourth: "edward norton" },
@@ -222,6 +223,7 @@
     { first: "the insider",     second: "michael mann",     third: "al pacino",   fourth: "russell crowe" },
     /* 1992*/
     { first: "glengarry glen ross",     second: "david mamet",     third: "al pacino",   fourth: "kevin spacey" },
+
 
 
 
@@ -264,8 +266,24 @@
         )
       );
 
-      if (usableRows.length < 5) {
-        messageElement.textContent = "Please add at least five rows with a first value and one clue.";
+      /*
+        Shuffle before removing duplicate first values. This means that when
+        several rows share the same first value, any one of those rows can be
+        the version used in a round. Matching ignores capitalization and
+        surrounding spaces when deciding whether first values are duplicates.
+      */
+      const seenFirstValues = new Set();
+      const uniqueRows = shuffle(usableRows).filter(row => {
+        const firstKey = row.first.trim().toLocaleLowerCase();
+        if (seenFirstValues.has(firstKey)) {
+          return false;
+        }
+        seenFirstValues.add(firstKey);
+        return true;
+      });
+
+      if (uniqueRows.length < 5) {
+        messageElement.textContent = "Please add at least five unique first-category names with one clue each.";
         return;
       }
 
@@ -275,7 +293,7 @@
       matchedPartners = new Map();
       messageElement.classList.remove("success");
 
-      shuffle(usableRows).slice(0, 5).forEach((row, index) => {
+      uniqueRows.slice(0, 5).forEach((row, index) => {
         /*
           Every card still receives a unique ID so duplicate visible cards
           remain separate objects. Matching itself uses the required clue
@@ -452,3 +470,4 @@
   </script>
 </body>
 </html>
+
