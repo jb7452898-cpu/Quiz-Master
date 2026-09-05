@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Four-Category Matching Quiz</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --background: #0d0f0e;
+      --panel: linear-gradient(to bottom,#1a0000,black);
+      --card: #101210;
+      --text: #f5f1e8;
+      --muted: #9d9a91;
+      --border: #393c37;
+      --green: #c8f25b;
+      --orange: #ff8a4c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--background);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    button { font: inherit; }
+    .game {
+      width: min(1050px, calc(100% - 30px));
+      margin: auto;
+      padding: 40px 0 60px;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 30px;
+      padding-bottom: 26px;
+      border-bottom: 1px solid #333631;
+    }
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--green);
+      font-size: .72rem;
+      font-weight: bold;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      font: 500 clamp(2.6rem, 7vw, 5rem)/.95 Georgia, serif;
+      letter-spacing: -.04em;
+    }
+    .subtitle { margin: 16px 0 0; color: var(--muted); }
+    .score-box {
+      min-width: 150px;
+      padding: 14px 22px;
+      border: 1px solid #333631;
+      background: #131513;
+    }
+    .score-box span {
+      display: block;
+      color: var(--muted);
+      font-size: .7rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    #score { display: block; margin-top: 4px; font-size: 1.8rem; }
+    .panel {
+      margin-top: 30px;
+      padding: 27px;
+      background: var(--panel);
+      border: 1px solid #333631;
+      box-shadow: 10px 10px 0 #090a09;
+      transition: border-color .35s, box-shadow .35s, background .35s;
+    }
+    .panel.victory-glow {
+      border-color: var(--green);
+      background: #1b2115;
+      box-shadow:
+        0 0 18px rgba(200, 242, 91, .75),
+        0 0 48px rgba(200, 242, 91, .35),
+        10px 10px 0 #090a09;
+      animation: victoryPulse .7s ease-in-out infinite alternate;
+    }
+    @keyframes victoryPulse {
+      from { filter: brightness(1); }
+      to { filter: brightness(1.18); }
+    }
+    .panel-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    h2 { margin: 0; font: 500 1.55rem Georgia, serif; }
+    #new-round {
+      padding: 11px 18px;
+      color: #10120e;
+      background: var(--green);
+      border: 1px solid var(--green);
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #new-round:hover { background: #ddff81; }
+    #message {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      margin: 22px 0 16px;
+      padding: 0 14px;
+      background: #20211e;
+      border-left: 3px solid var(--orange);
+      color: #ded8cc;
+    }
+    #message.success { border-color: var(--green); color: var(--green); }
+    #cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      transition: opacity .75s ease, transform .75s ease;
+    }
+    #cards.fade-away { opacity: 0; transform: scale(.96); }
+    .card {
+      min-height: 76px;
+      display: grid;
+      grid-template-columns: 42px 1fr 30px;
+      align-items: center;
+      padding: 0 16px;
+      color: transparent;
+      background: linear-gradient(to bottom,#cc0000,#ff0000);
+      background:-clip: text;
+      -webkit-background-clip: text;
+      border: 1px solid var(--border);
+      text-align: left;
+      cursor: pointer;
+      transition: transform .15s, border-color .15s, background .15s;
+    }
+    .card:hover:not(:disabled) { border-color: #777d70; transform: translateY(-2px); }
+    .card.selected { border-color: var(--orange); background: #241b16; }
+    .card.matched {
+      border-color: #405126;
+      background: #1a2112;
+      color: #a9c95f;
+      cursor: pointer;
+    }
+    .card.matched:hover { border-color: var(--green); transform: translateY(-2px); }
+    .card.matched .mark {
+      color: var(--green);
+      font-size: .68rem;
+      font-weight: bold;
+      letter-spacing: .06em;
+    }
+    .number { color: #6d7169; font: .78rem monospace; }
+    .label { font-size: clamp(1rem, 2vw, 1.25rem); font-weight: bold; }
+    .mark { color: var(--green); text-align: right; font-size: 1.1rem; }
+    .instructions { margin: 22px 2px 0; color: var(--muted); font-size: .85rem; }
+    @media (max-width: 680px) {
+      .game { width: min(100% - 20px, 1050px); padding-top: 24px; }
+      header { align-items: stretch; flex-direction: column; }
+      .score-box { min-width: 0; }
+      .panel { padding: 18px; }
+      #cards { grid-template-columns: 1fr; }
+    }
+    .gradient-text {
+        background: linear-gradient(to bottom,pink, red);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+    }
+  </style>
+</head>
+<body>
+  <main class="game">
+    <header>
+      <div>
+        <p class="eyebrow">Four-category quiz</p>
+        <h1 class = "gradient-text">HORROR MATCH</h1>
+        <p class="subtitle">Five source terms. Five clues. Ten shuffled positions.</p>
+        <p>NOTE:  Some clues fit better than others! (you can have a match that's technically correct but if you still can't solve the game, you may have to UNLOCK and try again!)</p>
+      </div>
+      <div class="score-box">
+        <span>Score</span>
+        <strong id="score">0</strong>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <h2>Match each term to its clue</h2>
+        <button id="new-round" type="button">New round</button>
+        <button onclick="window.location.href='index.html'">QUIT</button>
+      </div>
+      <p id="message" aria-live="polite">Choose any card to begin.</p>
+      <div id="cards"></div>
+      <p class="instructions">Correct match: +10 points &nbsp;·&nbsp; Incorrect attempt: −2 points &nbsp;·&nbsp; Click UNLOCK on either matched tile to reconsider it</p>
+    </section>
+  </main>
+
+
+
+  <script src = "horror_movies_data.js"></script>
+  <script>
+    /*
+      EDIT YOUR QUIZ ROWS HERE.
+
+      Five unique first values are selected for each round. Duplicate first
+      values may appear in the full list when they have different clues.
+      The second, third, and optional fourth values are allowed to repeat.
+      Leave fourth blank (or omit it) when a row needs only three categories.
+    */
+    let QUIZ_ROWS = SUBJECT_DATA;
+
+    const cardsElement = document.getElementById("cards");
+    const panelElement = document.querySelector(".panel");
+    const scoreElement = document.getElementById("score");
+    const messageElement = document.getElementById("message");
+
+    let cards = [];
+    let selectedCard = null;
+    let matchedCards = new Set();
+    let matchedPartners = new Map();
+    let matchCredits = 0;
+    let incorrectPenalties = 0;
+    let roundEnding = false;
+    let glowTimer = null;
+    let resetTimer = null;
+
+    function shuffle(items) {
+      const copy = [...items];
+      for (let index = copy.length - 1; index > 0; index--) {
+        const randomIndex = Math.floor(Math.random() * (index + 1));
+        [copy[index], copy[randomIndex]] = [copy[randomIndex], copy[index]];
+      }
+      return copy;
+    }
+
+    function createRound() {
+      clearTimeout(glowTimer);
+      clearTimeout(resetTimer);
+      roundEnding = false;
+      panelElement.classList.remove("victory-glow");
+      cardsElement.classList.remove("fade-away");
+
+      const usableRows = QUIZ_ROWS.filter(row =>
+        row.first && [row.second, row.third, row.fourth].some(value =>
+          typeof value === "string" && value.trim() !== ""
+        )
+      );
+
+      /*
+        Shuffle before removing duplicate first values. This means that when
+        several rows share the same first value, any one of those rows can be
+        the version used in a round. Matching ignores capitalization and
+        surrounding spaces when deciding whether first values are duplicates.
+      */
+      const seenFirstValues = new Set();
+      const uniqueRows = shuffle(usableRows).filter(row => {
+        const firstKey = row.first.trim().toLocaleLowerCase();
+        if (seenFirstValues.has(firstKey)) {
+          return false;
+        }
+        seenFirstValues.add(firstKey);
+        return true;
+      });
+
+      if (uniqueRows.length < 5) {
+        messageElement.textContent = "Please add at least five unique first-category names with one clue each.";
+        return;
+      }
+
+      cards = [];
+      selectedCard = null;
+      matchedCards = new Set();
+      matchedPartners = new Map();
+      messageElement.classList.remove("success");
+
+      uniqueRows.slice(0, 5).forEach((row, index) => {
+        /*
+          Every card still receives a unique ID so duplicate visible cards
+          remain separate objects. Matching itself uses the required clue
+          value, allowing identical clue cards to be interchangeable.
+        */
+        const pairId = Date.now() + "-" + index + "-" + Math.random();
+        const validAnswers = [row.second, row.third, row.fourth].filter(value =>
+          typeof value === "string" && value.trim() !== ""
+        );
+        const clue = validAnswers[Math.floor(Math.random() * validAnswers.length)];
+
+        cards.push({
+          id: pairId + "-first",
+          pairId: pairId,
+          label: row.first,
+          type: "first",
+          /*
+            Keep every nonblank clue from the original row. The visible clue
+            used in this round does not limit which value the first card accepts.
+          */
+          validAnswers: validAnswers
+        });
+
+        cards.push({
+          id: pairId + "-clue",
+          pairId: pairId,
+          label: clue,
+          type: "clue"
+        });
+      });
+
+      cards = shuffle(cards);
+      messageElement.textContent = "Choose any card to begin.";
+      renderCards();
+    }
+
+    function renderCards() {
+      cardsElement.innerHTML = "";
+
+      cards.forEach((card, index) => {
+        const button = document.createElement("button");
+        const isSelected = selectedCard && selectedCard.id === card.id;
+        const isMatched = matchedCards.has(card.id);
+
+        button.type = "button";
+        button.className =
+          "card" +
+          (isSelected ? " selected" : "") +
+          (isMatched ? " matched" : "");
+        button.setAttribute("aria-pressed", String(Boolean(isSelected)));
+        if (isMatched) {
+          button.setAttribute("aria-label", "Unlock " + card.label + " and its current match");
+          button.title = "Return both matched tiles to the board";
+        }
+
+        const number = document.createElement("span");
+        number.className = "number";
+        number.textContent = String(index + 1).padStart(2, "0");
+
+        const label = document.createElement("span");
+        label.className = "label";
+        label.textContent = card.label;
+
+        const mark = document.createElement("span");
+        mark.className = "mark";
+        mark.textContent = isMatched ? "UNLOCK" : isSelected ? "●" : "";
+
+        button.append(number, label, mark);
+        button.addEventListener("click", () => chooseCard(card));
+        cardsElement.appendChild(button);
+      });
+    }
+
+    function chooseCard(card) {
+      if (roundEnding) return;
+
+      if (matchedCards.has(card.id)) {
+        unlockMatch(card);
+        return;
+      }
+
+      if (!selectedCard) {
+        selectedCard = card;
+        messageElement.textContent = 'Now find the match for "' + card.label + '."';
+        renderCards();
+        return;
+      }
+
+      if (selectedCard.id === card.id) {
+        selectedCard = null;
+        messageElement.textContent = "Selection cleared. Choose another card.";
+        renderCards();
+        return;
+      }
+
+      const firstCard =
+        selectedCard.type === "first" ? selectedCard :
+        card.type === "first" ? card : null;
+
+      const clueCard =
+        selectedCard.type === "clue" ? selectedCard :
+        card.type === "clue" ? card : null;
+
+      /*
+        Identically worded clue cards are interchangeable. A first-category
+        card accepts any nonblank clue from its complete original row. For
+        example, Blueberry accepts "Blue", "Fruit", or "Berry", regardless
+        of which row produced the particular visible clue card.
+      */
+      const correct =
+        firstCard !== null &&
+        clueCard !== null &&
+        firstCard.validAnswers.includes(clueCard.label);
+
+      if (correct) {
+        matchedCards.add(selectedCard.id);
+        matchedCards.add(card.id);
+        matchedPartners.set(selectedCard.id, card.id);
+        matchedPartners.set(card.id, selectedCard.id);
+        matchCredits += 10;
+        updateScore();
+        selectedCard = null;
+
+        if (matchedCards.size === 10) {
+          messageElement.textContent = "Perfect! All five matches found — new round starting…";
+          messageElement.classList.add("success");
+          roundEnding = true;
+        } else {
+          messageElement.textContent = "Correct! +10 points";
+        }
+      } else {
+        incorrectPenalties += 2;
+        updateScore();
+        selectedCard = null;
+        messageElement.textContent = "Not a match. Try again. −2 points";
+      }
+
+      renderCards();
+
+      if (roundEnding) {
+        panelElement.classList.add("victory-glow");
+        glowTimer = setTimeout(() => {
+          cardsElement.classList.add("fade-away");
+        }, 900);
+        resetTimer = setTimeout(createRound, 1800);
+      }
+    }
+
+    function unlockMatch(card) {
+      const partnerId = matchedPartners.get(card.id);
+      if (!partnerId) return;
+
+      const partner = cards.find(item => item.id === partnerId);
+      matchedCards.delete(card.id);
+      matchedCards.delete(partnerId);
+      matchedPartners.delete(card.id);
+      matchedPartners.delete(partnerId);
+      matchCredits -= 10;
+      selectedCard = null;
+      messageElement.classList.remove("success");
+      messageElement.textContent =
+        'Unlocked "' + card.label + '" and "' + partner.label +
+        '.” Both tiles can now be matched again.';
+      updateScore();
+      renderCards();
+    }
+
+    function updateScore() {
+      scoreElement.textContent = Math.max(0, matchCredits - incorrectPenalties);
+    }
+
+    document.getElementById("new-round").addEventListener("click", createRound);
+    createRound();
+  </script>
+</body>
+</html>
+
+
+<!--
+make a quiz game using html, javascript, css
+
+reload a winning grid automatically
+
+made an option to UNLOCK matches in case the clues worked but didnt fit the overall scheme
+
+have a button to list all data
+
+reset the board once all matches are made
+
+
+first try, three categories.
+
+each row will have information in all three categories
+
+the game will choose five rows at random
+
+each selected row will match the first category to either the second category or the third category (at random)
+
+the first category and its second or third category match can appear anywhere in the ten spots
+
+all of the words in the first category will be unique but second and third category may not be.
+
+i would like the player be able to match a second or third category value to its first category match even if they repeat
+
+for example, apple - red, beet - red.  if these words appear anywhere in a round i would like the user to be able to pick either "red" and match it to either "beet" or "apple", leaving the other "red" to be matched.
+
+
+sample list:
+
+apple  red  fruit
+banana  yellow  fruit
+broccoli  green   vegetable
+lemon   yellow   fruit
+beet   red    vegetable
+
+
+sample output
+
+
+1.apple        6. broccoli
+2.green        7. lemon
+3.fruit        8.  yellow
+4.vegetable        9.  fruit
+5.banana        10.  beet
+
+im using fruit as an example, but im really looking for a structure because im going to repeat this for a variety of trivia categories
+
+im assuming the list can be hardcoded in the javascript.  i want the entire game to exist on one page, with a cookie in local storage keeping track of each session date and score before closing the page
+
+
+Fixed! Each first-category card now accepts either associated value from its complete row:
+
+Blueberry matches Blue or Fruit
+Grape matches Purple or Fruit
+Banana matches Yellow or Fruit
+Lemon matches Yellow or Fruit
+Selection order does not matter
+
+-->

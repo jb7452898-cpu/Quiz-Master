@@ -10,6 +10,8 @@
       --cyan: #35f2ff;
       --violet: #9c6cff;
       --panel: rgba(10, 17, 30, 0.88);
+      --darkorange: rgba(200,85,0,1);
+      --horrormoviesfont: rgba(25,0,0,1);
     }
 
     * { box-sizing: border-box; }
@@ -125,6 +127,29 @@
       outline: none;
     }
 
+      .horrormovies{
+      display: inline-block;
+      padding: 1rem 1.45rem;
+      border: 1px solid var(--red);
+      border-radius: 10px;
+      color: var(--horrormoviesfont);
+      background: var(--darkorange);
+      box-shadow: 0 0 22px rgba(250, 85, 0, 0.68);
+      font-size: clamp(1rem, 3vw, 1.25rem);
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+    }
+
+    .horrormovies:hover,
+    .horrormovies:focus-visible{
+      transform: translateY(-3px) scale(1.02);
+      background: #a6faff;
+      box-shadow: 0 0 34px rgba(53, 242, 255, 0.6);
+      outline: none;
+    }
+
   </style>
 </head>
 <body>
@@ -144,6 +169,13 @@
     <p>
     <a class = "serialkiller" href="matching_quiz_serial_killers.html">
       SERIAL KILLERS
+    </a>
+    </p>
+        </a>
+    </p>
+    <p>
+    <a class = "horrormovies" href="matching_quiz_horror_movies.html">
+      Horror Movies
     </a>
     </p>
   </main>
