@@ -75,11 +75,11 @@
       transition: border-color .35s, box-shadow .35s, background .35s;
     }
     .panel.victory-glow {
-      border-color: var(--green);
-      background: #1b2115;
+      border-color: #000000;
+      background: #020000;
       box-shadow:
-        0 0 18px rgba(200, 242, 91, .75),
-        0 0 48px rgba(200, 242, 91, .35),
+        0 0 18px rgba(200, 0, 10, .75),
+        0 0 48px rgba(250, 0, 0, 1),
         10px 10px 0 #090a09;
       animation: victoryPulse .7s ease-in-out infinite alternate;
     }
@@ -97,32 +97,56 @@
     #new-round {
       padding: 11px 18px;
       color: #10120e;
-      background: var(--green);
-      border: 1px solid var(--green);
+      background: #ff0000;
+      border: 1px solid #0f0000;
       font-weight: bold;
       cursor: pointer;
     }
-    #new-round:hover { background: #ddff81; }
+    #new-round:hover { background: #ff0011; }
     #message {
       min-height: 44px;
       display: flex;
       align-items: center;
       margin: 22px 0 16px;
       padding: 0 14px;
-      background: #20211e;
-      border-left: 3px solid var(--orange);
-      color: #ded8cc;
+      background: #aa0005;
+      border-left: 3px solid #fa0010;
+      color: #0f0000;
     }
-    #message.success { border-color: var(--green); color: var(--green); }
+    #message.success { border-color: #f00000; color: #0f0000; }
     #cards {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 10px;
-      transition: opacity .75s ease, transform .75s ease;
     }
-    #cards.fade-away { opacity: 0; transform: scale(.96); }
     .card {
       min-height: 76px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      perspective: 1000px;
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    .card-inner {
+      display: block;
+      position: relative;
+      min-height: 76px;
+      transform-style: preserve-3d;
+      transition: transform .75s cubic-bezier(.2,.72,.2,1);
+      transition-delay: var(--flip-delay, 0ms);
+    }
+    #cards.reveal-image .card-inner { transform: rotateY(180deg); }
+    .card-front,
+    .card-back {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border: 1px solid var(--border);
+    }
+    .card-front {
       display: grid;
       grid-template-columns: 42px 1fr 30px;
       align-items: center;
@@ -131,29 +155,36 @@
       background: linear-gradient(to bottom,#cc0000,#ff0000);
       background:-clip: text;
       -webkit-background-clip: text;
-      border: 1px solid var(--border);
-      text-align: left;
-      cursor: pointer;
       transition: transform .15s, border-color .15s, background .15s;
     }
-    .card:hover:not(:disabled) { border-color: #777d70; transform: translateY(-2px); }
-    .card.selected { border-color: var(--orange); background: #241b16; }
-    .card.matched {
+    .card-back {
+      display: block;
+      transform: rotateY(180deg);
+      background-image: url("dragon-demon-stone.png");
+      background-repeat: no-repeat;
+      background-size: 200% 500%;
+      background-position: calc(var(--mosaic-column) * 100%) calc(var(--mosaic-row) * 25%);
+      border-color: #6b1717;
+      box-shadow: inset 0 0 18px rgba(0,0,0,.4);
+    }
+    .card:hover:not(:disabled) .card-front { border-color: #777d70; transform: translateY(-2px); }
+    .card.selected .card-front { border-color: var(--orange); background: #000000; }
+    .card.matched .card-front {
       border-color: #405126;
-      background: #1a2112;
-      color: #a9c95f;
+      background: #402020;
+      color: #dd0000;
       cursor: pointer;
     }
-    .card.matched:hover { border-color: var(--green); transform: translateY(-2px); }
+    .card.matched:hover .card-front { border-color: #0f0000; transform: translateY(-2px); }
     .card.matched .mark {
-      color: var(--green);
+      color: #ff0010;
       font-size: .68rem;
       font-weight: bold;
       letter-spacing: .06em;
     }
     .number { color: #6d7169; font: .78rem monospace; }
     .label { font-size: clamp(1rem, 2vw, 1.25rem); font-weight: bold; }
-    .mark { color: var(--green); text-align: right; font-size: 1.1rem; }
+    .mark { color: #f00000; text-align: right; font-size: 1.1rem; }
     .instructions { margin: 22px 2px 0; color: var(--muted); font-size: .85rem; }
     @media (max-width: 680px) {
       .game { width: min(100% - 20px, 1050px); padding-top: 24px; }
@@ -193,7 +224,7 @@
       </div>
       <p id="message" aria-live="polite">Choose any card to begin.</p>
       <div id="cards"></div>
-      <p class="instructions">Correct match: +10 points &nbsp;·&nbsp; Incorrect attempt: −2 points &nbsp;·&nbsp; Click UNLOCK on either matched tile to reconsider it</p>
+      <p class="instructions">Correct match: +10 points &nbsp;Â·&nbsp; Incorrect attempt: âˆ’2 points &nbsp;Â·&nbsp; Click UNLOCK on either matched tile to reconsider it</p>
     </section>
   </main>
 
@@ -240,7 +271,7 @@
       clearTimeout(resetTimer);
       roundEnding = false;
       panelElement.classList.remove("victory-glow");
-      cardsElement.classList.remove("fade-away");
+      cardsElement.classList.remove("reveal-image");
 
       const usableRows = QUIZ_ROWS.filter(row =>
         row.first && [row.second, row.third, row.fourth].some(value =>
@@ -331,6 +362,20 @@
           button.title = "Return both matched tiles to the board";
         }
 
+        button.style.setProperty("--mosaic-column", index % 2);
+        button.style.setProperty("--mosaic-row", Math.floor(index / 2));
+        button.style.setProperty("--flip-delay", (index * 85) + "ms");
+
+        const inner = document.createElement("span");
+        inner.className = "card-inner";
+
+        const front = document.createElement("span");
+        front.className = "card-front";
+
+        const back = document.createElement("span");
+        back.className = "card-back";
+        back.setAttribute("aria-hidden", "true");
+
         const number = document.createElement("span");
         number.className = "number";
         number.textContent = String(index + 1).padStart(2, "0");
@@ -341,9 +386,11 @@
 
         const mark = document.createElement("span");
         mark.className = "mark";
-        mark.textContent = isMatched ? "UNLOCK" : isSelected ? "●" : "";
+        mark.textContent = isMatched ? "UNLOCK" : isSelected ? "â—" : "";
 
-        button.append(number, label, mark);
+        front.append(number, label, mark);
+        inner.append(front, back);
+        button.append(inner);
         button.addEventListener("click", () => chooseCard(card));
         cardsElement.appendChild(button);
       });
@@ -400,7 +447,7 @@
         selectedCard = null;
 
         if (matchedCards.size === 10) {
-          messageElement.textContent = "Perfect! All five matches found — new round starting…";
+          messageElement.textContent = "Perfect! All five matches found â€” the stone seal is revealed.";
           messageElement.classList.add("success");
           roundEnding = true;
         } else {
@@ -410,7 +457,7 @@
         incorrectPenalties += 2;
         updateScore();
         selectedCard = null;
-        messageElement.textContent = "Not a match. Try again. −2 points";
+        messageElement.textContent = "Not a match. Try again. âˆ’2 points";
       }
 
       renderCards();
@@ -418,9 +465,8 @@
       if (roundEnding) {
         panelElement.classList.add("victory-glow");
         glowTimer = setTimeout(() => {
-          cardsElement.classList.add("fade-away");
-        }, 900);
-        resetTimer = setTimeout(createRound, 1800);
+          cardsElement.classList.add("reveal-image");
+        }, 500);
       }
     }
 
@@ -438,7 +484,7 @@
       messageElement.classList.remove("success");
       messageElement.textContent =
         'Unlocked "' + card.label + '" and "' + partner.label +
-        '.” Both tiles can now be matched again.';
+        '.â€ Both tiles can now be matched again.';
       updateScore();
       renderCards();
     }
@@ -447,7 +493,19 @@
       scoreElement.textContent = Math.max(0, matchCredits - incorrectPenalties);
     }
 
-    document.getElementById("new-round").addEventListener("click", createRound);
+    function startNewRound() {
+      if (!cardsElement.classList.contains("reveal-image")) {
+        createRound();
+        return;
+      }
+
+      clearTimeout(resetTimer);
+      cardsElement.classList.remove("reveal-image");
+      messageElement.textContent = "Turning the seal back over for the next cluesâ€¦";
+      resetTimer = setTimeout(createRound, 1200);
+    }
+
+    document.getElementById("new-round").addEventListener("click", startNewRound);
     createRound();
   </script>
 </body>
